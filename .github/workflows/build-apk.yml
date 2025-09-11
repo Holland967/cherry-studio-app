@@ -1,0 +1,79 @@
+# .github/workflows/build-apk.yml
+name: Build Release APK
+
+on:
+  workflow_dispatch:          # 手动触发
+  push:
+    branches: [ main ]        # 也可在合并主干后自动打
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3000
+
+    steps:
+      # 1. 检出源码
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. 安装 Node 与 Yarn
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'yarn'
+
+      # 3. 安装依赖
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # 4. 生成数据库（Drizzle）
+      - name: Generate DB schema
+        run: npx drizzle-kit generate
+
+      # 5. 缓存 Gradle 依赖
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # 6. 安装 JDK 17（Expo 0.74+ 需要）
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # 7. 安装 Android SDK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 8. 生成调试签名（仅 CI 内部测试）
+      - name: Generate debug keystore
+        run: |
+          keytool -genkey -v -keystore android/app/debug.keystore \
+            -storepass android -keypass android \
+            -alias androiddebugkey -keyalg RSA -keysize 2048 \
+            -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
+      # 9. Expo prebuild 生成原生工程
+      - name: Prebuild Android
+        run: npx expo prebuild -p android --no-install
+
+      # 10. 构建 Release APK
+      - name: Build APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      # 11. 上传 APK 制品
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: cherry-studio-release
+          path: android/app/build/outputs/apk/release/app-release.apk
+          # retention-days: 7
