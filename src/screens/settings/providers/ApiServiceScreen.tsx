@@ -5,7 +5,7 @@ import { ImpactFeedbackStyle } from 'expo-haptics'
 import { sortBy } from 'lodash'
 import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActivityIndicator, Alert } from 'react-native'
+import { ActivityIndicator } from 'react-native'
 import { Input, Stack, Text, XStack, YStack } from 'tamagui'
 
 import ExternalLink from '@/components/ExternalLink'
@@ -16,6 +16,7 @@ import { IconButton } from '@/components/ui/IconButton'
 import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
 import { isEmbeddingModel } from '@/config/models'
 import { PROVIDER_URLS } from '@/config/providers'
+import { useDialog } from '@/hooks/useDialog'
 import { useProvider } from '@/hooks/useProviders'
 import { ProvidersStackParamList } from '@/navigators/settings/ProvidersStackNavigator'
 import { checkApi } from '@/services/ApiService'
@@ -29,6 +30,7 @@ type ProviderSettingsRouteProp = RouteProp<ProvidersStackParamList, 'ApiServiceS
 
 export default function ApiServiceScreen() {
   const { t } = useTranslation()
+  const dialog = useDialog()
   const route = useRoute<ProviderSettingsRouteProp>()
 
   const { providerId } = route.params
@@ -138,13 +140,12 @@ export default function ApiServiceScreen() {
         errorKey = 'api_key_empty'
       }
 
-      Alert.alert(t('settings.provider.check_failed.title'), t(`settings.provider.check_failed.${errorKey}`), [
-        {
-          text: t('common.ok'),
-          style: 'cancel',
-          onPress: () => handleBottomSheetClose()
-        }
-      ])
+      dialog.open({
+        type: 'error',
+        title: t('settings.provider.check_failed.title'),
+        content: t(`settings.provider.check_failed.${errorKey}`),
+        onConFirm: () => handleBottomSheetClose()
+      })
       return
     }
 
@@ -161,13 +162,12 @@ export default function ApiServiceScreen() {
 
       setCheckApiStatus('error')
 
-      Alert.alert(t('settings.provider.check_failed.title'), errorMessage, [
-        {
-          text: t('common.ok'),
-          style: 'cancel',
-          onPress: () => handleBottomSheetClose()
-        }
-      ])
+      dialog.open({
+        type: 'error',
+        title: t('settings.provider.check_failed.title'),
+        content: errorMessage,
+        onConFirm: () => handleBottomSheetClose()
+      })
     } finally {
       setTimeout(() => {
         setCheckApiStatus('idle')

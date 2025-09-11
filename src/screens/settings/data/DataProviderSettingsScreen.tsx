@@ -2,7 +2,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { Eye, EyeOff, ShieldCheck } from '@tamagui/lucide-icons'
 import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActivityIndicator, Alert } from 'react-native'
+import { ActivityIndicator } from 'react-native'
 import { Button, Input, Stack, Text, XStack, YStack } from 'tamagui'
 
 import ExternalLink from '@/components/ExternalLink'
@@ -12,6 +12,7 @@ import { ApiCheckSheet } from '@/components/settings/websearch/ApiCheckSheet'
 import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
 import { CustomSwitch } from '@/components/ui/Switch'
 import { useDataBackupProvider } from '@/hooks/useDataBackup'
+import { useDialog } from '@/hooks/useDialog'
 import { loggerService } from '@/services/LoggerService'
 import { ApiStatus } from '@/types/assistant'
 const logger = loggerService.withContext('ProviderSettingsScreen')
@@ -35,6 +36,7 @@ export type ProviderConfig = {
 
 export default function ProviderSettingsScreen({ config }: { config: ProviderConfig }) {
   const { t } = useTranslation()
+  const dialog = useDialog()
 
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({})
   const [checkApiStatus, setCheckApiStatus] = useState<ApiStatus>('idle')
@@ -90,7 +92,11 @@ export default function ProviderSettingsScreen({ config }: { config: ProviderCon
       logger.info('Provider config updated:', key, value)
     } catch (error) {
       logger.error('Error updating provider config:', error)
-      Alert.alert(t(`settings.${config.providerType}.update.fail`))
+      dialog.open({
+        type: 'error',
+        title: t('common.error'),
+        content: t(`settings.${config.providerType}.update.fail`)
+      })
     }
   }
 

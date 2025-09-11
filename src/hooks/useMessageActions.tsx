@@ -1,20 +1,22 @@
+import { useNavigation } from '@react-navigation/native'
 import * as Clipboard from 'expo-clipboard'
 import * as Speech from 'expo-speech'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Alert } from 'react-native'
 
 import { loggerService } from '@/services/LoggerService'
 import { deleteMessageById, fetchTranslateThunk, regenerateAssistantMessage } from '@/services/MessagesService'
 import { useAppDispatch } from '@/store'
 import { Assistant } from '@/types/assistant'
 import { Message } from '@/types/message'
+import { HomeNavigationProps } from '@/types/naviagate'
 import { filterMessages } from '@/utils/messageUtils/filters'
 import { getMainTextContent } from '@/utils/messageUtils/find'
 import { findTranslationBlocks } from '@/utils/messageUtils/find'
 
 import { removeManyBlocks } from '../../db/queries/messageBlocks.queries'
 import { upsertMessages } from '../../db/queries/messages.queries'
+import { useDialog } from './useDialog'
 import { useToast } from './useToast'
 
 const logger = loggerService.withContext('useMessageActions')
@@ -33,6 +35,8 @@ export const useMessageActions = ({ message, assistant }: UseMessageActionsProps
   const [isTranslating, setIsTranslating] = useState(false)
   const [isTranslated, setIsTranslated] = useState(false)
   const toast = useToast()
+  const dialog = useDialog()
+  const navigation = useNavigation<HomeNavigationProps>()
 
   useEffect(() => {
     const checkTranslation = async () => {
@@ -64,33 +68,36 @@ export const useMessageActions = ({ message, assistant }: UseMessageActionsProps
 
   const handleDelete = async () => {
     return new Promise<void>((resolve, reject) => {
-      Alert.alert(t('message.delete_message'), t('message.delete_message_confirmation'), [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
-          onPress: () => reject(new Error('User cancelled'))
-        },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteMessageById(message.id)
+      dialog.open({
+        type: 'error',
+        title: t('message.delete_message'),
+        content: t('message.delete_message_confirmation'),
+        confirmText: t('common.delete'),
+        cancelText: t('common.cancel'),
+        onConFirm: async () => {
+          try {
+            await deleteMessageById(message.id)
 
-              if (message.askId) {
-                await deleteMessageById(message.askId)
-              }
-
-              logger.info('Message deleted successfully:', message.id)
-              resolve()
-            } catch (error) {
-              logger.error('Error deleting message:', error)
-              Alert.alert(t('common.error'), t('common.error_occurred'))
-              reject(error)
+            if (message.askId) {
+              await deleteMessageById(message.askId)
             }
+
+            logger.info('Message deleted successfully:', message.id)
+            resolve()
+          } catch (error) {
+            logger.error('Error deleting message:', error)
+            dialog.open({
+              type: 'error',
+              title: t('common.error'),
+              content: t('common.error_occurred')
+            })
+            reject(error)
           }
+        },
+        onCancel: () => {
+          reject(new Error('User cancelled'))
         }
-      ])
+      })
     })
   }
 
@@ -138,9 +145,23 @@ export const useMessageActions = ({ message, assistant }: UseMessageActionsProps
       const errorMessage = error instanceof Error ? error.message : String(error)
 
       if (errorMessage.includes('Translate assistant model is not defined')) {
-        Alert.alert(t('common.error_occurred'), t('error.translate_assistant_model_not_defined'))
+        dialog.open({
+          type: 'warning',
+          title: t('common.error_occurred'),
+          content: t('error.translate_assistant_model_not_defined'),
+          confirmText: t('common.go_to_settings'),
+          onConFirm: () => {
+            navigation.navigate('AssistantSettings', {
+              screen: 'AssistantSettingsScreen'
+            })
+          }
+        })
       } else {
-        Alert.alert(t('common.error_occurred'), errorMessage)
+        dialog.open({
+          title: t('common.error_occurred'),
+          content: errorMessage,
+          type: 'error'
+        })
       }
     } finally {
       setIsTranslating(false)

@@ -76,7 +76,7 @@ class CustomRenderer extends Renderer implements RendererInterface {
           borderColor={currentColors.codeBorder}>
           <XStack gap={8} flex={1} alignItems="center">
             {getCodeLanguageIcon(lang) && <Image source={getCodeLanguageIcon(lang)} width={18} height={18} />}
-            <Text fontSize={13} lineHeight={13} color="$textSecondary">
+            <Text fontSize={13} lineHeight={13} color="$textSecondary" userSelect="none">
               {lang.toUpperCase()}
             </Text>
           </XStack>
@@ -113,7 +113,7 @@ class CustomRenderer extends Renderer implements RendererInterface {
     return result.map(({ type, content }) => {
       if (type === 'text') {
         return (
-          <Text key={this.getKey()} color="$green100" fontFamily="monospace">
+          <Text key={this.getKey()} color="$green100" fontFamily="monospace" userSelect="none">
             {content}
           </Text>
         )
@@ -139,6 +139,7 @@ class CustomRenderer extends Renderer implements RendererInterface {
 
     return (
       <View
+        userSelect="none"
         key={this.getKey()}
         style={{
           ...styles,
@@ -164,12 +165,14 @@ class CustomRenderer extends Renderer implements RendererInterface {
         } else {
           return super.text(content, {
             ...styles,
-            color: currentColors.text
+            color: currentColors.text,
+            userSelect: 'none'
           })
         }
       })
     } else {
       return super.text(text, {
+        userSelect: 'none',
         fontSize: 16,
         lineHeight: 24,
         color: currentColors.text,
@@ -256,6 +259,7 @@ class CustomRenderer extends Renderer implements RendererInterface {
     const renderCell = (cellData: ReactNode, cellIndex: number) => {
       return (
         <View
+          userSelect="none"
           key={`${cellIndex}`}
           style={{
             width: cellWidth,
@@ -332,6 +336,7 @@ export const useMarkedRenderer = (isDark: boolean) => {
 const styles = StyleSheet.create({
   text: {
     fontSize: 14,
-    fontFamily: 'JetbrainMono'
+    fontFamily: 'JetbrainMono',
+    userSelect: 'none'
   }
 })

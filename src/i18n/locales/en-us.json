@@ -134,7 +134,8 @@
       "translate": "Translate",
       "visit": "Visit",
       "websearch": "Web Search",
-      "yesterday": "Yesterday"
+      "yesterday": "Yesterday",
+      "go_to_settings": "Settings"
     },
     "error": {
       "availableProviders": "Available Providers",

@@ -1,17 +1,17 @@
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { ChevronRight } from '@tamagui/lucide-icons'
 import { MotiView } from 'moti'
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Input, Stack, Text, XStack } from 'tamagui'
 
 import { SettingGroup, SettingRow } from '@/components/settings'
 import { isReasoningModel } from '@/config/models'
+import { DEFAULT_CONTEXTCOUNT, DEFAULT_MAX_TOKENS, DEFAULT_TEMPERATURE } from '@/constants'
 import { Assistant, AssistantSettings, Model } from '@/types/assistant'
 
 import ModelSheet from '../sheets/ModelSheet'
 import { ReasoningSheet } from '../sheets/ReasoningSheet'
-import { CustomSlider } from '../ui/CustomSlider'
 import { CustomSwitch } from '../ui/Switch'
 
 interface ModelTabContentProps {
@@ -23,6 +23,15 @@ export function ModelTabContent({ assistant, updateAssistant }: ModelTabContentP
   const { t } = useTranslation()
   const modelSheetRef = useRef<BottomSheetModal>(null)
   const reasoningSheetRef = useRef<BottomSheetModal>(null)
+
+  // Local state for input values
+  const [temperatureInput, setTemperatureInput] = useState(
+    (assistant.settings?.temperature ?? DEFAULT_TEMPERATURE).toString()
+  )
+  const [contextInput, setContextInput] = useState(
+    (assistant.settings?.contextCount ?? DEFAULT_CONTEXTCOUNT).toString()
+  )
+  const [maxTokensInput, setMaxTokensInput] = useState((assistant.settings?.maxTokens ?? DEFAULT_MAX_TOKENS).toString())
 
   // 统一的助手更新函数
   const handleAssistantChange = async (updates: Partial<Assistant>) => {
@@ -91,29 +100,47 @@ export function ModelTabContent({ assistant, updateAssistant }: ModelTabContentP
       </Button>
       <SettingGroup>
         <SettingRow>
-          <CustomSlider
-            label={t('assistants.settings.temperature')}
-            value={settings.temperature ?? 0.7}
-            max={10}
-            multiplier={10}
-            onValueChange={value => handleSettingsChange('temperature', value[0] / 10)}
+          <Text>{t('assistants.settings.temperature')}</Text>
+          <Input
+            minWidth={60}
+            height={25}
+            fontSize={12}
+            lineHeight={12 * 1.2}
+            textAlign="center"
+            value={temperatureInput}
+            onChangeText={setTemperatureInput}
+            onBlur={() => {
+              const parsedValue = parseFloat(temperatureInput)
+
+              if (!isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 1) {
+                handleSettingsChange('temperature', parsedValue)
+              } else {
+                setTemperatureInput((settings.temperature ?? DEFAULT_TEMPERATURE).toString())
+              }
+            }}
+            keyboardType="numeric"
           />
         </SettingRow>
         <SettingRow>
-          <CustomSlider
-            label={t('assistants.settings.top_p')}
-            value={settings.topP ?? 0.8}
-            max={10}
-            multiplier={10}
-            onValueChange={value => handleSettingsChange('topP', value[0] / 10)}
-          />
-        </SettingRow>
-        <SettingRow>
-          <CustomSlider
-            label={t('assistants.settings.context')}
-            value={settings.contextCount ?? 15}
-            max={30}
-            onValueChange={value => handleSettingsChange('contextCount', value[0])}
+          <Text>{t('assistants.settings.context')}</Text>
+          <Input
+            minWidth={60}
+            height={25}
+            fontSize={12}
+            lineHeight={12 * 1.2}
+            textAlign="center"
+            value={contextInput}
+            onChangeText={setContextInput}
+            onBlur={() => {
+              const parsedValue = parseInt(contextInput)
+
+              if (!isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 30) {
+                handleSettingsChange('contextCount', parsedValue)
+              } else {
+                setContextInput((settings.contextCount ?? DEFAULT_CONTEXTCOUNT).toString())
+              }
+            }}
+            keyboardType="numeric"
           />
         </SettingRow>
       </SettingGroup>
@@ -137,13 +164,22 @@ export function ModelTabContent({ assistant, updateAssistant }: ModelTabContentP
           <SettingRow>
             <Text>{t('assistants.settings.max_tokens_value')}</Text>
             <Input
-              minWidth={80}
+              minWidth={60}
               height={25}
               fontSize={12}
               lineHeight={12 * 1.2}
-              value={settings.maxTokens?.toString() ?? ''}
-              onChangeText={value => handleSettingsChange('maxTokens', parseInt(value) || 0)}
-              onBlur={e => handleSettingsChange('maxTokens', parseInt(e.nativeEvent.text) || 0)}
+              textAlign="center"
+              value={maxTokensInput}
+              onChangeText={setMaxTokensInput}
+              onBlur={() => {
+                const parsedValue = parseInt(maxTokensInput)
+
+                if (!isNaN(parsedValue) && parsedValue > 0) {
+                  handleSettingsChange('maxTokens', parsedValue)
+                } else {
+                  setMaxTokensInput((settings.maxTokens ?? DEFAULT_MAX_TOKENS).toString())
+                }
+              }}
               keyboardType="numeric"
             />
           </SettingRow>

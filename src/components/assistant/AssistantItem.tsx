@@ -19,6 +19,7 @@ import { haptic } from '@/utils/haptic'
 import EmojiAvatar from './EmojiAvator'
 
 const logger = loggerService.withContext('Assistant Item')
+import { useTheme } from '@/hooks/useTheme'
 
 interface AssistantItemProps {
   assistant: Assistant
@@ -29,7 +30,7 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, onAssistantPress }) 
   const { t } = useTranslation()
   const navigation = useNavigation<HomeNavigationProps>()
   const toast = useToast()
-
+  const { isDark } = useTheme()
   const handlePress = () => {
     haptic()
     onAssistantPress(assistant)
@@ -71,7 +72,13 @@ const AssistantItem: FC<AssistantItemProps> = ({ assistant, onAssistantPress }) 
         borderRadius={16}
         backgroundColor="$uiCardBackground">
         <XStack gap={14} flex={1}>
-          <EmojiAvatar emoji={assistant.emoji} size={46} borderRadius={18} borderWidth={2} />
+          <EmojiAvatar
+            emoji={assistant.emoji}
+            size={46}
+            borderRadius={18}
+            borderWidth={3}
+            borderColor={isDark ? '#333333' : '#f7f7f7'}
+          />
           <YStack gap={4} flex={1} justifyContent="center">
             <Text fontSize={14} numberOfLines={1} ellipsizeMode="tail" fontWeight="bold" color="$textPrimary">
               {assistant.name}

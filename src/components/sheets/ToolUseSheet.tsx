@@ -1,9 +1,8 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
 import { SquareFunction, Wrench } from '@tamagui/lucide-icons'
-import { t } from 'i18next'
-import { forwardRef, useEffect } from 'react'
+import { forwardRef } from 'react'
 import React from 'react'
-import { BackHandler } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button, Text, XStack, YStack } from 'tamagui'
 
@@ -15,22 +14,23 @@ interface ToolUseSheetProps {
   updateAssistant: (assistant: Assistant) => Promise<void>
 }
 
-const toolUseOptions = [
-  {
-    id: 'function' as const,
-    name: t('assistants.settings.tooluse.function'),
-    icon: <SquareFunction size={20} />
-  },
-  {
-    id: 'prompt' as const,
-    name: t('assistants.settings.tooluse.prompt'),
-    icon: <Wrench size={20} />
-  }
-]
-
 const ToolUseSheet = forwardRef<BottomSheetModal, ToolUseSheetProps>(({ assistant, updateAssistant }, ref) => {
   const { isDark } = useTheme()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
+
+  const toolUseOptions = [
+    {
+      id: 'function' as const,
+      name: t('assistants.settings.tooluse.function'),
+      icon: <SquareFunction size={20} />
+    },
+    {
+      id: 'prompt' as const,
+      name: t('assistants.settings.tooluse.prompt'),
+      icon: <Wrench size={20} />
+    }
+  ]
 
   const renderBackdrop = (props: any) => (
     <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.5} pressBehavior="close" />
@@ -47,22 +47,6 @@ const ToolUseSheet = forwardRef<BottomSheetModal, ToolUseSheetProps>(({ assistan
     })
     ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
   }
-
-  // 处理Android返回按钮事件
-  useEffect(() => {
-    const backAction = () => {
-      if ((ref as React.RefObject<BottomSheetModal>)?.current) {
-        ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
-        return true
-      }
-
-      return false
-    }
-
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-
-    return () => backHandler.remove()
-  }, [ref])
 
   return (
     <BottomSheetModal

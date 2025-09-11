@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Alert } from 'react-native'
 import { useDispatch } from 'react-redux'
 
 import { RestoreStep } from '@/components/settings/data/RestoreProgressModal'
+import { useDialog } from '@/hooks/useDialog'
 import { ProgressUpdate, restore, RestoreStepId } from '@/services/BackupService'
 import { loggerService } from '@/services/LoggerService'
 import { FileMetadata } from '@/types/file'
@@ -71,6 +71,7 @@ export interface UseRestoreOptions {
 export function useRestore(options: UseRestoreOptions = {}) {
   const { t } = useTranslation()
   const dispatch = useDispatch()
+  const dialog = useDialog()
 
   const { stepConfigs = DEFAULT_RESTORE_STEPS, customRestoreFunction = restore } = options
 
@@ -79,10 +80,14 @@ export function useRestore(options: UseRestoreOptions = {}) {
   const [overallStatus, setOverallStatus] = useState<'running' | 'success' | 'error'>('running')
 
   const validateFile = (file: { mimeType?: string; name: string; type?: string }) => {
-    const isValid = file.name.includes('cherry-studio-app')
+    const isValid = file.name.includes('cherry-studio')
 
     if (!isValid) {
-      Alert.alert(t('error.backup.title'), t('error.backup.file_invalid'))
+      dialog.open({
+        type: 'error',
+        title: t('error.backup.title'),
+        content: t('error.backup.file_invalid')
+      })
       return false
     }
 

@@ -1,8 +1,7 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import * as ExpoLinking from 'expo-linking'
-import React, { forwardRef, useEffect } from 'react'
+import React, { forwardRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BackHandler } from 'react-native'
 import { Stack, Text, View, XStack, YStack } from 'tamagui'
 
 import { useTheme } from '@/hooks/useTheme'
@@ -81,22 +80,6 @@ const CitationCard = ({ citation, onPress }: { citation: Citation; onPress: (url
 const CitationSheet = forwardRef<BottomSheetModal, CitationSheetProps>(({ citations }, ref) => {
   const { t } = useTranslation()
   const { isDark } = useTheme()
-
-  // 处理Android返回按钮事件
-  useEffect(() => {
-    const backAction = () => {
-      if ((ref as React.RefObject<BottomSheetModal>)?.current) {
-        ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
-        return true
-      }
-
-      return false
-    }
-
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-
-    return () => backHandler.remove()
-  }, [ref])
 
   // 添加背景组件渲染函数
   const renderBackdrop = (props: any) => (

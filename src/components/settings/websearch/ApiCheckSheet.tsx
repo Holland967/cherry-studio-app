@@ -1,8 +1,7 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
 import { ChevronsRight } from '@tamagui/lucide-icons'
-import React, { forwardRef, useEffect } from 'react'
+import React, { forwardRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BackHandler } from 'react-native'
 import { Button, Spinner, Text, View, XStack, YStack } from 'tamagui'
 
 import { useTheme } from '@/hooks/useTheme'
@@ -22,22 +21,6 @@ export const ApiCheckSheet = forwardRef<BottomSheetModal, ApiCheckSheetProps>(
     const { t } = useTranslation()
 
     const { isDark } = useTheme()
-
-    // 处理Android返回按钮事件
-    useEffect(() => {
-      const backAction = () => {
-        if ((ref as React.RefObject<BottomSheetModal>)?.current) {
-          ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
-          return true
-        }
-
-        return false
-      }
-
-      const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-
-      return () => backHandler.remove()
-    }, [ref])
 
     return (
       <BottomSheetModal

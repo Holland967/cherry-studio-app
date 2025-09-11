@@ -134,7 +134,8 @@
       "translate": "翻訳",
       "visit": "訪問",
       "websearch": "ウェブ検索",
-      "yesterday": "昨日"
+      "yesterday": "昨日",
+      "go_to_settings": "設定に移動"
     },
     "error": {
       "availableProviders": "利用可能なプロバイダー",

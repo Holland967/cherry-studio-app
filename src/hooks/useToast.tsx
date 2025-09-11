@@ -1,6 +1,6 @@
 import { ImpactFeedbackStyle } from 'expo-haptics'
 import { AnimatePresence, MotiView } from 'moti'
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Text } from 'tamagui'
 
@@ -14,13 +14,14 @@ export type ToastOptions = {
   icon?: React.ReactNode | string
   color?: string
   duration?: number
+  expires?: number
 }
 
 type ToastContextValue = { show: (content: React.ReactNode | string, options?: ToastOptions) => void } | undefined
 
 const ToastContext = createContext<ToastContextValue>(undefined)
 
-const DEFAULT_DURATION = 2000
+const DEFAULT_DURATION = 1500
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const { isDark } = useTheme()
@@ -46,13 +47,30 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   })
 
   const show = (content: React.ReactNode | string, newOptions?: ToastOptions) => {
-    const key = uuid()
     haptic(ImpactFeedbackStyle.Medium)
-    setToasts([...toasts, { content, ...newOptions, key }])
-    setTimeout(() => {
-      setToasts(prev => prev.filter(toast => toast.key !== key))
-    }, newOptions?.duration ?? DEFAULT_DURATION)
+    const key = uuid()
+    const now = Date.now()
+    const duration = newOptions?.duration ?? DEFAULT_DURATION
+    const expires = now + duration
+    setToasts(prev => [
+      // 延长旧的 toast 的过期时间，避免新 toast 覆盖旧的 toast 导致看不见
+      ...prev.map(toast => ({ ...toast, expires: (toast.expires || 0) + duration })),
+      { content, ...newOptions, key, expires }
+    ])
   }
+
+  const removeExpiredToasts = () => {
+    const now = Date.now()
+    setToasts(prev => prev.filter(toast => toast.expires && toast.expires > now))
+  }
+
+  useEffect(() => {
+    const animationFrameId = requestAnimationFrame(removeExpiredToasts)
+    if (toasts.length === 0) {
+      cancelAnimationFrame(animationFrameId)
+    }
+    return () => cancelAnimationFrame(animationFrameId)
+  }, [toasts])
 
   const api = { show }
 

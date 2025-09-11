@@ -2,12 +2,13 @@ import { Camera, CircleUserRound } from '@tamagui/lucide-icons'
 import * as ImagePicker from 'expo-image-picker'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Alert, TouchableOpacity } from 'react-native'
+import { TouchableOpacity } from 'react-native'
 import { Avatar, Card, Input, Separator, Text, XStack, YStack } from 'tamagui'
 
 import { SettingContainer } from '@/components/settings'
 import { HeaderBar } from '@/components/settings/HeaderBar'
 import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
+import { useDialog } from '@/hooks/useDialog'
 import { useSettings } from '@/hooks/useSettings'
 import { loggerService } from '@/services/LoggerService'
 
@@ -15,6 +16,7 @@ const logger = loggerService.withContext('PersonalScreen')
 
 export default function PersonalScreen() {
   const { t } = useTranslation()
+  const dialog = useDialog()
   const { avatar, userName, setAvatar, setUserName } = useSettings()
 
   const handleAvatarPress = async () => {
@@ -35,7 +37,11 @@ export default function PersonalScreen() {
         }
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image')
+      dialog.open({
+        type: 'error',
+        title: 'Error',
+        content: 'Failed to pick image'
+      })
       logger.error('handleAvatarPress', error as Error)
     }
   }

@@ -1,9 +1,8 @@
 import { BottomSheetBackdrop, BottomSheetModal } from '@gorhom/bottom-sheet'
 import { Settings2 } from '@tamagui/lucide-icons'
 import { ImpactFeedbackStyle } from 'expo-haptics'
-import React, { forwardRef, useEffect } from 'react'
+import React, { forwardRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BackHandler } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button, Stack, Text, View, XStack, YStack } from 'tamagui'
 
@@ -38,22 +37,6 @@ const AssistantItemSheet = forwardRef<BottomSheetModal, AssistantItemSheetProps>
     const { isDark } = useCustomTheme()
     const { bottom } = useSafeAreaInsets()
     const toast = useToast()
-
-    // 处理Android返回按钮事件
-    useEffect(() => {
-      const backAction = () => {
-        if ((ref as React.RefObject<BottomSheetModal>)?.current) {
-          ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
-          return true
-        }
-
-        return false
-      }
-
-      const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-
-      return () => backHandler.remove()
-    }, [ref])
 
     // 添加背景组件渲染函数
     const renderBackdrop = (props: any) => (

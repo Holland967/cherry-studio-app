@@ -2,12 +2,12 @@ import { PenLine } from '@tamagui/lucide-icons'
 import * as ImagePicker from 'expo-image-picker'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Alert } from 'react-native'
 import { Button, Stack, YStack } from 'tamagui'
 import { Image } from 'tamagui'
 import { LinearGradient } from 'tamagui/linear-gradient'
 
 import { DefaultProviderIcon } from '@/components/icons/DefaultProviderIcon'
+import { useDialog } from '@/hooks/useDialog'
 import { loggerService } from '@/services/LoggerService'
 import { FileMetadata } from '@/types/file'
 import { getFileType } from '@/utils/file'
@@ -60,6 +60,7 @@ const validateImage = (asset: ImagePicker.ImagePickerAsset): string | null => {
 
 export function ProviderIconButton({ providerId, iconUri, onImageSelected }: ProviderIconButtonProps) {
   const { t } = useTranslation()
+  const dialog = useDialog()
   const [image, setImage] = useState<string | null>(null)
 
   useEffect(() => {
@@ -86,7 +87,11 @@ export function ProviderIconButton({ providerId, iconUri, onImageSelected }: Pro
       const validationError = validateImage(asset)
 
       if (validationError) {
-        Alert.alert(t('common.error'), validationError)
+        dialog.open({
+          type: 'error',
+          title: t('common.error'),
+          content: validationError
+        })
         return
       }
 
@@ -95,7 +100,11 @@ export function ProviderIconButton({ providerId, iconUri, onImageSelected }: Pro
       onImageSelected?.(file)
     } catch (error) {
       logger.error('handleUploadIcon Error', error)
-      Alert.alert(t('common.error_occurred'), 'Failed to upload image. Please try again.')
+      dialog.open({
+        type: 'error',
+        title: t('common.error_occurred'),
+        content: 'Failed to upload image. Please try again.'
+      })
     }
   }
 

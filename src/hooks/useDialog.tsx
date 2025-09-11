@@ -1,6 +1,7 @@
 import { ImpactFeedbackStyle } from 'expo-haptics'
 import { MotiView } from 'moti'
 import React, { createContext, useContext, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal, Pressable, StyleSheet } from 'react-native'
 import { Button, StackProps, Text, XStack, YStack } from 'tamagui'
 
@@ -19,7 +20,7 @@ export type DialogOptions = {
   maskClosable?: boolean
   type?: 'info' | 'warning' | 'error' | 'success'
   onConFirm?: () => void
-  onCancle?: () => void
+  onCancel?: () => void
 }
 
 type DialogContextValue = { open: (options: DialogOptions) => void; close: () => void } | undefined
@@ -30,6 +31,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
   const { isDark } = useTheme()
   const [isOpen, setOpen] = useState(false)
   const [options, setOptions] = useState<DialogOptions | null>(null)
+  const { t } = useTranslation()
 
   const styles = StyleSheet.create({
     centeredView: {
@@ -49,7 +51,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
 
   const cancel = () => {
     haptic(ImpactFeedbackStyle.Medium)
-    options?.onCancle?.()
+    options?.onCancel?.()
     close()
   }
 
@@ -84,8 +86,8 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
 
   const showCancel = options?.showCancel ?? true
   const maskClosable = options?.maskClosable ?? true
-  const confirmText = options?.confirmText ?? 'OK'
-  const cancelText = options?.cancelText ?? 'Cancel'
+  const confirmText = options?.confirmText ?? t('common.ok')
+  const cancelText = options?.cancelText ?? t('common.cancel')
 
   const confirmButtonStyle = getConfirmButtonStyle()
 
@@ -101,7 +103,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
           style={styles.centeredView}>
           {maskClosable && <Pressable style={StyleSheet.absoluteFill} onPress={cancel} />}
           <YStack width="75%" borderRadius={20} backgroundColor="$uiCardBackground">
-            <YStack gap={8} padding={20} alignItems="center">
+            <YStack gap={12} padding={20} alignItems="center">
               {typeof options?.title === 'string' ? (
                 <Text fontSize={18} fontWeight="bold" color="$textPrimary">
                   {options.title}
@@ -110,7 +112,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
                 options?.title
               )}
               {typeof options?.content === 'string' ? (
-                <Text fontSize={16} color="$textSecondary" textAlign="center">
+                <Text fontSize={15} lineHeight={20} color="$textSecondary" textAlign="center">
                   {options.content}
                 </Text>
               ) : (

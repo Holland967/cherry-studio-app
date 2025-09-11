@@ -134,7 +134,8 @@
       "translate": "翻譯",
       "visit": "訪問",
       "websearch": "網路搜尋",
-      "yesterday": "昨天"
+      "yesterday": "昨天",
+      "go_to_settings": "前往設定"
     },
     "error": {
       "availableProviders": "可用供應商",

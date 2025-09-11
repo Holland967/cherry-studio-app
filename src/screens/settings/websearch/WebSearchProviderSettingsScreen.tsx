@@ -4,7 +4,7 @@ import { Eye, EyeOff, ShieldCheck } from '@tamagui/lucide-icons'
 import { ImpactFeedbackStyle } from 'expo-haptics'
 import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActivityIndicator, Alert } from 'react-native'
+import { ActivityIndicator } from 'react-native'
 import { Button, Input, Stack, Text, XStack, YStack } from 'tamagui'
 
 import ExternalLink from '@/components/ExternalLink'
@@ -13,6 +13,7 @@ import { HeaderBar } from '@/components/settings/HeaderBar'
 import { ApiCheckSheet } from '@/components/settings/websearch/ApiCheckSheet'
 import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
 import { WEB_SEARCH_PROVIDER_CONFIG } from '@/config/websearchProviders'
+import { useDialog } from '@/hooks/useDialog'
 import { useWebSearchProvider } from '@/hooks/useWebsearchProviders'
 import { WebSearchStackParamList } from '@/navigators/settings/WebSearchStackNavigator'
 import WebSearchService from '@/services/WebSearchService'
@@ -23,6 +24,7 @@ type WebsearchProviderSettingsRouteProp = RouteProp<WebSearchStackParamList, 'We
 
 export default function WebSearchProviderSettingsScreen() {
   const { t } = useTranslation()
+  const dialog = useDialog()
   const route = useRoute<WebsearchProviderSettingsRouteProp>()
 
   const [showApiKey, setShowApiKey] = useState(false)
@@ -89,22 +91,20 @@ export default function WebSearchProviderSettingsScreen() {
       if (valid) {
         setCheckApiStatus('success')
       } else {
-        Alert.alert(t('settings.websearch.check_fail'), errorMessage, [
-          {
-            text: t('common.ok'),
-            style: 'cancel',
-            onPress: () => handleBottomSheetClose()
-          }
-        ])
+        dialog.open({
+          type: 'error',
+          title: t('settings.websearch.check_fail'),
+          content: errorMessage,
+          onConFirm: () => handleBottomSheetClose()
+        })
       }
     } catch (error) {
-      Alert.alert(t('settings.websearch.check_error'), t('common.error_occurred'), [
-        {
-          text: t('common.ok'),
-          style: 'cancel',
-          onPress: () => handleBottomSheetClose()
-        }
-      ])
+      dialog.open({
+        type: 'error',
+        title: t('settings.websearch.check_error'),
+        content: t('common.error_occurred'),
+        onConFirm: () => handleBottomSheetClose()
+      })
       throw error
     } finally {
       setTimeout(() => {

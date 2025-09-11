@@ -134,7 +134,8 @@
       "translate": "翻译",
       "visit": "访问",
       "websearch": "网络搜索",
-      "yesterday": "昨天"
+      "yesterday": "昨天",
+      "go_to_settings": "前往设置"
     },
     "error": {
       "availableProviders": "可用提供商",

@@ -1,8 +1,8 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
 import { Trash2 } from '@tamagui/lucide-icons'
-import React, { forwardRef, useEffect } from 'react'
+import React, { forwardRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BackHandler, TouchableOpacity } from 'react-native'
+import { TouchableOpacity } from 'react-native'
 import { Text, XStack, YStack } from 'tamagui'
 
 import { TranslatedIcon, TranslationIcon } from '@/components/icons/TranslationIcon'
@@ -23,22 +23,6 @@ const MessageFooterMoreSheet = forwardRef<BottomSheetModal, MessageFooterMorePro
   const renderBackdrop = (props: any) => (
     <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.5} pressBehavior="close" />
   )
-
-  // 处理Android返回按钮事件
-  useEffect(() => {
-    const backAction = () => {
-      if ((ref as React.RefObject<BottomSheetModal>)?.current) {
-        ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
-        return true
-      }
-
-      return false
-    }
-
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-
-    return () => backHandler.remove()
-  }, [ref])
 
   const onTranslate = async () => {
     ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()

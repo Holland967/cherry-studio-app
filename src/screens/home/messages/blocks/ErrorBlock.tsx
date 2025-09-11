@@ -1,9 +1,9 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { Copy } from '@tamagui/lucide-icons'
 import * as Clipboard from 'expo-clipboard'
-import React, { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
+import React, { forwardRef, useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BackHandler, ScrollView } from 'react-native'
+import { ScrollView } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button, Separator, Text, View, XStack, YStack } from 'tamagui'
 
@@ -162,21 +162,6 @@ const ErrorDetailSheet = forwardRef<BottomSheetModal, ErrorDetailSheetProps>(({ 
   const { isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const [copiedText, setCopiedText] = useState(false)
-
-  // Handle Android back button
-  useEffect(() => {
-    const backAction = () => {
-      if ((ref as React.RefObject<BottomSheetModal>)?.current) {
-        ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
-        return true
-      }
-
-      return false
-    }
-
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-    return () => backHandler.remove()
-  }, [ref])
 
   const copyErrorDetails = async () => {
     if (!error) return

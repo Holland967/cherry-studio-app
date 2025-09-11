@@ -1,5 +1,8 @@
+/**
+ * Assistant Default Settings
+ */
 export const DEFAULT_TIMEOUT = 5 * 1000 * 60
-export const DEFAULT_TEMPERATURE = 1.0
+export const DEFAULT_TEMPERATURE = 0.7
 export const DEFAULT_CONTEXTCOUNT = 5
 export const DEFAULT_MAX_TOKENS = 4096
 export const SYSTEM_PROMPT_THRESHOLD = 128

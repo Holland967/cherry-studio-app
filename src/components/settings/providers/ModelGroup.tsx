@@ -48,14 +48,13 @@ export function ModelGroup({
   return (
     <Accordion.Item key={groupName} value={`item-${index}`} marginBottom={8}>
       <Accordion.Trigger
-        backgroundColor="$uiCardBackground"
         flexDirection="row"
         justifyContent="space-between"
         alignItems="center"
         paddingVertical={12}
         paddingHorizontal={16}
-        borderRadius={9}
-        borderWidth={0}>
+        borderWidth={0}
+        pressStyle={{ backgroundColor: '$gray20' }}>
         {({ open }: { open: boolean }) => (
           <XStack gap={10} alignItems="center" justifyContent="space-between">
             <XStack gap={10} alignItems="center" flex={1}>
@@ -85,13 +84,7 @@ export function ModelGroup({
       </Accordion.Trigger>
 
       <Accordion.HeightAnimator animation="quick">
-        <Accordion.Content
-          exitStyle={{ opacity: 0 }}
-          borderBottomLeftRadius={9}
-          borderBottomRightRadius={9}
-          paddingHorizontal={16}
-          paddingVertical={5}
-          backgroundColor="$uiCardBackground">
+        <Accordion.Content exitStyle={{ opacity: 0 }} paddingHorizontal={16} paddingVertical={5}>
           <FlatList
             data={models}
             renderItem={renderModelItem}

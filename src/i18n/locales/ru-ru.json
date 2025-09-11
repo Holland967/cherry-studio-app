@@ -134,7 +134,8 @@
       "translate": "Перевод",
       "visit": "Посетить",
       "websearch": "Поиск в интернете",
-      "yesterday": "Вчера"
+      "yesterday": "Вчера",
+      "go_to_settings": "В настройки"
     },
     "error": {
       "availableProviders": "Доступные провайдеры",

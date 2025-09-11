@@ -5,7 +5,7 @@ import debounce from 'lodash/debounce'
 import { forwardRef, useEffect, useState } from 'react'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { BackHandler, useWindowDimensions } from 'react-native'
+import { useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button, Stack, Text, View, XStack, YStack } from 'tamagui'
 
@@ -35,22 +35,6 @@ const ModelSheet = forwardRef<BottomSheetModal, ModelSheetProps>(({ mentions, se
   const [isMultiSelectActive, setIsMultiSelectActive] = useState(false)
   const insets = useSafeAreaInsets()
   const dimensions = useWindowDimensions()
-
-  // 处理Android返回按钮事件
-  useEffect(() => {
-    const backAction = () => {
-      if ((ref as React.RefObject<BottomSheetModal>)?.current) {
-        ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
-        return true
-      }
-
-      return false
-    }
-
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-
-    return () => backHandler.remove()
-  }, [ref])
 
   const debouncedSetQuery = debounce((query: string) => {
     setSearchQuery(query)

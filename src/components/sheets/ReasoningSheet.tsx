@@ -1,8 +1,7 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
 import { Check } from '@tamagui/lucide-icons'
-import React, { forwardRef, useEffect, useMemo } from 'react'
+import React, { forwardRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BackHandler } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button, Text, View, XStack, YStack } from 'tamagui'
 
@@ -89,22 +88,6 @@ export const ReasoningSheet = forwardRef<BottomSheetModal, ReasoningSheetProps>(
 
       return MODEL_SUPPORTED_OPTIONS[modelType]
     }, [model, modelType])
-
-    // 处理Android返回按钮事件
-    useEffect(() => {
-      const backAction = () => {
-        if ((ref as React.RefObject<BottomSheetModal>)?.current) {
-          ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
-          return true
-        }
-
-        return false
-      }
-
-      const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-
-      return () => backHandler.remove()
-    }, [ref])
 
     const onValueChange = (option?: ThinkingOption) => {
       const isEnabled = option !== undefined && option !== 'off'

@@ -1,9 +1,10 @@
 import * as ExpoLinking from 'expo-linking'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Alert, OpaqueColorValue } from 'react-native'
+import { OpaqueColorValue } from 'react-native'
 import { GetThemeValueForKey, Text } from 'tamagui'
 
+import { useDialog } from '@/hooks/useDialog'
 import { loggerService } from '@/services/LoggerService'
 
 import { IconButton } from './ui/IconButton'
@@ -19,6 +20,7 @@ interface ExternalLinkProps {
 
 const ExternalLink: React.FC<ExternalLinkProps> = ({ href, children, color = '$textLink', size, onError }) => {
   const { t } = useTranslation()
+  const dialog = useDialog()
 
   const handlePress = async () => {
     const supported = await ExpoLinking.canOpenURL(href)
@@ -35,7 +37,11 @@ const ExternalLink: React.FC<ExternalLinkProps> = ({ href, children, color = '$t
         if (onError) {
           onError(error instanceof Error ? error : new Error(String(error)))
         } else {
-          Alert.alert(t('errors.linkErrorTitle'), message)
+          dialog.open({
+            type: 'error',
+            title: t('errors.linkErrorTitle'),
+            content: message
+          })
         }
       }
     } else {
@@ -45,7 +51,11 @@ const ExternalLink: React.FC<ExternalLinkProps> = ({ href, children, color = '$t
       if (onError) {
         onError(new Error(message))
       } else {
-        Alert.alert(t('errors.cannotOpenLinkTitle'), message)
+        dialog.open({
+          type: 'error',
+          title: t('errors.cannotOpenLinkTitle'),
+          content: message
+        })
       }
     }
   }

@@ -5,7 +5,7 @@ import { unzip } from 'react-native-zip-archive'
 import { loggerService } from '@/services/LoggerService'
 import { setAvatar, setUserName } from '@/store/settings'
 import { Assistant } from '@/types/assistant'
-import { BackupData, ExportIndexedData, ExportReduxData } from '@/types/databackup'
+import { ExportIndexedData, ExportReduxData, ImportIndexedData, ImportReduxData } from '@/types/databackup'
 import { FileMetadata } from '@/types/file'
 import { Message } from '@/types/message'
 
@@ -117,9 +117,7 @@ export async function restore(
 
     const dataFile = new File(unzipPath, 'data.json')
 
-    const data = JSON.parse(dataFile.text()) as BackupData
-
-    const { reduxData, indexedData } = transformBackupData(data)
+    const { reduxData, indexedData } = transformBackupData(dataFile.text())
 
     await restoreReduxData(reduxData, onProgress, dispatch)
     await restoreIndexedDbData(indexedData, onProgress, dispatch)
@@ -129,10 +127,26 @@ export async function restore(
   }
 }
 
-function transformBackupData(data: BackupData): { reduxData: ExportReduxData; indexedData: ExportIndexedData } {
-  const topicsFromRedux = data.redux.assistants.assistants.flatMap(a => a.topics)
+function transformBackupData(data: string): { reduxData: ExportReduxData; indexedData: ExportIndexedData } {
+  const orginalData = JSON.parse(data)
+  const localStorage = orginalData.localStorage
 
-  const allMessages = data.indexedDB.topics.flatMap(t => t.messages)
+  const persistDataString = localStorage['persist:cherry-studio']
+
+  const rawReduxData = JSON.parse(persistDataString)
+
+  const reduxData: ImportReduxData = {
+    assistants: JSON.parse(rawReduxData.assistants),
+    llm: JSON.parse(rawReduxData.llm),
+    websearch: JSON.parse(rawReduxData.websearch),
+    settings: JSON.parse(rawReduxData.settings)
+  }
+
+  const topicsFromRedux = reduxData.assistants.assistants.flatMap(a => a.topics)
+
+  const indexedDb: ImportIndexedData = orginalData.indexedDB
+
+  const allMessages = indexedDb.topics.flatMap(t => t.messages)
 
   const messagesByTopicId = allMessages.reduce<Record<string, Message[]>>((acc, message) => {
     const { topicId } = message
@@ -156,12 +170,12 @@ function transformBackupData(data: BackupData): { reduxData: ExportReduxData; in
   })
 
   return {
-    reduxData: data.redux as ExportReduxData,
+    reduxData: reduxData,
     indexedData: {
       topics: topicsWithMessages,
-      message_blocks: data.indexedDB.message_blocks,
+      message_blocks: indexedDb.message_blocks,
       messages: allMessages,
-      settings: data.indexedDB.settings
+      settings: indexedDb.settings
     }
   }
 }

@@ -1,6 +1,5 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
-import React, { forwardRef, useEffect } from 'react'
-import { BackHandler } from 'react-native'
+import React, { forwardRef } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { YStack } from 'tamagui'
 
@@ -25,22 +24,6 @@ const ToolSheet = forwardRef<BottomSheetModal, ToolSheetProps>(
   ({ files, setFiles, assistant, updateAssistant }, ref) => {
     const { isDark } = useTheme()
     const insets = useSafeAreaInsets()
-
-    // 处理Android返回按钮事件
-    useEffect(() => {
-      const backAction = () => {
-        if ((ref as React.RefObject<BottomSheetModal>)?.current) {
-          ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
-          return true
-        }
-
-        return false
-      }
-
-      const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-
-      return () => backHandler.remove()
-    }, [ref])
 
     const dismissSheet = () => {
       ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
