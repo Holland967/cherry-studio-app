@@ -59,6 +59,7 @@ jobs:
       # 9. 生成调试签名（仅 CI 内部测试）
       - name: Generate debug keystore
         run: |
+          mkdir -p android/app
           keytool -genkey -v -keystore android/app/debug.keystore \
             -storepass android -keypass android \
             -alias androiddebugkey -keyalg RSA -keysize 2048 \
