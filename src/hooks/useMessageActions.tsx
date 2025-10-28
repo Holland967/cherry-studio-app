@@ -3,19 +3,17 @@ import * as Clipboard from 'expo-clipboard'
 import * as Speech from 'expo-speech'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import Share from 'react-native-share'
 
 import { loggerService } from '@/services/LoggerService'
 import { deleteMessageById, fetchTranslateThunk, regenerateAssistantMessage } from '@/services/MessagesService'
-import { useAppDispatch } from '@/store'
 import { Assistant } from '@/types/assistant'
 import { Message } from '@/types/message'
 import { HomeNavigationProps } from '@/types/naviagate'
 import { filterMessages } from '@/utils/messageUtils/filters'
-import { getMainTextContent } from '@/utils/messageUtils/find'
-import { findTranslationBlocks } from '@/utils/messageUtils/find'
+import { getMainTextContent, findTranslationBlocks } from '@/utils/messageUtils/find'
 
-import { removeManyBlocks } from '../../db/queries/messageBlocks.queries'
-import { upsertMessages } from '../../db/queries/messages.queries'
+import { messageBlockDatabase, messageDatabase } from '@database'
 import { useDialog } from './useDialog'
 import { useToast } from './useToast'
 
@@ -30,7 +28,6 @@ interface UseMessageActionsProps {
 
 export const useMessageActions = ({ message, assistant }: UseMessageActionsProps) => {
   const { t } = useTranslation()
-  const dispatch = useAppDispatch()
   const [playState, setPlayState] = useState<PlayState>('idle')
   const [isTranslating, setIsTranslating] = useState(false)
   const [isTranslated, setIsTranslated] = useState(false)
@@ -108,7 +105,7 @@ export const useMessageActions = ({ message, assistant }: UseMessageActionsProps
     }
 
     try {
-      await regenerateAssistantMessage(message, assistant, dispatch)
+      await regenerateAssistantMessage(message, assistant)
     } catch (error) {
       logger.error('Error regenerating message:', error)
     }
@@ -173,13 +170,13 @@ export const useMessageActions = ({ message, assistant }: UseMessageActionsProps
 
     try {
       const translationBlocks = await findTranslationBlocks(message)
-      await removeManyBlocks(translationBlocks.map(block => block.id))
+      await messageBlockDatabase.removeManyBlocks(translationBlocks.map(block => block.id))
 
       const updatedMessage = {
         ...message,
         blocks: message.blocks.filter(blockId => !translationBlocks.some(block => block.id === blockId))
       }
-      await upsertMessages(updatedMessage)
+      await messageDatabase.upsertMessages(updatedMessage)
       setIsTranslated(false)
     } catch (error) {
       logger.error('Error deleting translation:', error)
@@ -197,6 +194,56 @@ export const useMessageActions = ({ message, assistant }: UseMessageActionsProps
     }
   }
 
+  const handleBestAnswer = async () => {
+    try {
+      const newUsefulState = !message.useful
+
+      // 如果要标记为最佳答案，需要先将同一个askId组中的其他消息设置为非最佳答案
+      if (newUsefulState && message.askId) {
+        // 获取当前话题的所有消息
+        const allMessages = await messageDatabase.getMessagesByTopicId(message.topicId)
+
+        // 找到同一个askId组的所有消息（包括问题消息和其他回答）
+        const relatedMessages = allMessages.filter(msg => msg.askId === message.askId || msg.id === message.askId)
+
+        // 将所有相关消息的useful状态设置为false
+        const updatePromises = relatedMessages
+          .filter(msg => msg.id !== message.id && msg.useful) // 排除当前消息，只更新其他有用标记的消息
+          .map(msg => messageDatabase.updateMessageById(msg.id, { useful: false }))
+
+        await Promise.all(updatePromises)
+        logger.info(`Reset useful state for ${updatePromises.length} related messages in askId group: ${message.askId}`)
+      }
+
+      // 更新当前消息的useful状态
+      await messageDatabase.updateMessageById(message.id, { useful: newUsefulState })
+
+      const successMessage = newUsefulState ? t('message.marked_as_best_answer') : t('message.unmarked_as_best_answer')
+
+      toast.show(successMessage)
+      logger.info(`Message ${message.id} useful state updated to: ${newUsefulState}`)
+    } catch (error) {
+      logger.error('Error updating message useful state:', error)
+      toast.show(t('common.error_occurred'))
+    }
+  }
+  const handleShare = async () => {
+    try {
+      // Get message content
+      const filteredMessages = await filterMessages([message])
+      logger.info('Filtered Messages:', filteredMessages)
+      const mainContent = await getMainTextContent(filteredMessages[0])
+      await Share.open({
+        title: 'Cherry Studio',
+        message: mainContent,
+        failOnCancel: false
+      })
+    } catch (error) {
+      logger.error('Error sharing message:', error)
+      toast.show(t('common.error_occurred'))
+    }
+  }
+
   return {
     playState,
     isTranslating,
@@ -207,6 +254,9 @@ export const useMessageActions = ({ message, assistant }: UseMessageActionsProps
     handlePlay,
     handleTranslate,
     handleDeleteTranslation,
-    getMessageContent
+    getMessageContent,
+    handleBestAnswer,
+    isUseful: message.useful,
+    handleShare
   }
 }

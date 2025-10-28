@@ -1,4 +1,5 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { createUpdateTimestamps } from './columnHelpers'
 
 export const providers = sqliteTable('providers', {
   id: text('id').primaryKey(),
@@ -13,5 +14,6 @@ export const providers = sqliteTable('providers', {
   is_authed: integer('is_authed', { mode: 'boolean' }),
   rate_limit: integer('rate_limit'),
   is_not_support_array_content: integer('is_not_support_array_content', { mode: 'boolean' }),
-  notes: text('notes')
+  notes: text('notes'),
+  ...createUpdateTimestamps
 })

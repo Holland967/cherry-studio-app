@@ -2,6 +2,7 @@ import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { assistants } from './assistants'
 import { topics } from './topics'
+import { createUpdateTimestamps } from './columnHelpers'
 
 export const messages = sqliteTable(
   'messages',
@@ -14,8 +15,6 @@ export const messages = sqliteTable(
     topic_id: text('topic_id')
       .notNull()
       .references(() => topics.id),
-    created_at: text('created_at').notNull(),
-    updated_at: text('updated_at'),
     status: text('status').notNull(),
     model_id: text('model_id'),
     model: text('model'),
@@ -26,7 +25,8 @@ export const messages = sqliteTable(
     usage: text('usage'),
     metrics: text('metrics'),
     multi_model_message_style: text('multi_model_message_style'),
-    fold_selected: integer('fold_selected', { mode: 'boolean' })
+    fold_selected: integer('fold_selected', { mode: 'boolean' }),
+    ...createUpdateTimestamps
   },
   table => [
     index('idx_messages_topic_id').on(table.topic_id),

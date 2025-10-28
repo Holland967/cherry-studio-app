@@ -1,6 +1,5 @@
 import { loggerService } from '@/services/LoggerService'
-import { WebSearchState } from '@/store/websearch'
-import { WebSearchProvider, WebSearchProviderResponse } from '@/types/websearch'
+import { WebSearchState , WebSearchProvider, WebSearchProviderResponse } from '@/types/websearch'
 import { BochaSearchParams, BochaSearchResponse } from '@/utils/bocha'
 
 import BaseWebSearchProvider from './BaseWebSearchProvider'
@@ -33,7 +32,6 @@ export default class BochaProvider extends BaseWebSearchProvider {
       const params: BochaSearchParams = {
         query,
         count: websearch.maxResults,
-        exclude: websearch.excludeDomains.join(','),
         freshness: websearch.searchWithTime ? 'oneDay' : 'noLimit',
         summary: true,
         page: 1

@@ -1,17 +1,23 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
-import { ChevronRight } from '@tamagui/lucide-icons'
-import { useCallback, useState } from 'react'
-import React from 'react'
+import React, { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Text, XStack, YStack } from 'tamagui'
 
-import { PressableSettingRow, SettingContainer, SettingGroup, SettingGroupTitle } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
+import {
+  Container,
+  Group,
+  GroupTitle,
+  HeaderBar,
+  PressableRow,
+  RowRightArrow,
+  SafeAreaContainer,
+  Text,
+  XStack,
+  YStack
+} from '@/componentsV2'
 import { languagesOptions } from '@/config/languages'
-import { useTheme } from '@/hooks/useTheme'
 import { GeneralSettingsNavigationProps } from '@/types/naviagate'
 import { storage } from '@/utils'
+import { useTheme } from '@/hooks/useTheme'
 
 export default function GeneralSettingsScreen() {
   const { t, i18n } = useTranslation()
@@ -43,40 +49,40 @@ export default function GeneralSettingsScreen() {
   }
 
   return (
-    <SafeAreaContainer style={{ flex: 1 }}>
+    <SafeAreaContainer className="flex-1">
       <HeaderBar title={t('settings.general.title')} />
-      <SettingContainer>
-        <YStack gap={24} flex={1}>
+      <Container>
+        <YStack className="gap-6 flex-1">
           {/* Display settings */}
-          <YStack gap={8}>
-            <SettingGroupTitle>{t('settings.general.display.title')}</SettingGroupTitle>
-            <SettingGroup>
-              <PressableSettingRow onPress={() => navigation.navigate('ThemeSettingsScreen')}>
-                <XStack alignItems="center">
-                  <Text fontSize="$5">{t('settings.general.theme.title')}</Text>
+          <YStack className="gap-2">
+            <GroupTitle>{t('settings.general.display.title')}</GroupTitle>
+            <Group>
+              <PressableRow onPress={() => navigation.navigate('ThemeSettingsScreen')}>
+                <XStack className="items-center">
+                  <Text className="text-lg">{t('settings.general.theme.title')}</Text>
                 </XStack>
-                <XStack alignItems="center" space="$2">
-                  <Text color="$colorFocus">{t(`settings.general.theme.${activeTheme}`)}</Text>
-                  <ChevronRight size={24} color="$colorFocus" />
+                <XStack className="items-center gap-2">
+                  <Text className="text-gray-500">{t(`settings.general.theme.${activeTheme}`)}</Text>
+                  <RowRightArrow />
                 </XStack>
-              </PressableSettingRow>
-            </SettingGroup>
+              </PressableRow>
+            </Group>
           </YStack>
 
           {/* General settings */}
-          <YStack gap={8}>
-            <SettingGroupTitle>{t('settings.general.title')}</SettingGroupTitle>
-            <SettingGroup>
-              <PressableSettingRow onPress={() => navigation.navigate('LanguageChangeScreen')}>
-                <XStack alignItems="center">
-                  <Text fontSize="$5">{t('settings.general.language.title')}</Text>
+          <YStack className="gap-2">
+            <GroupTitle>{t('settings.general.title')}</GroupTitle>
+            <Group>
+              <PressableRow onPress={() => navigation.navigate('LanguageChangeScreen')}>
+                <XStack className="items-center">
+                  <Text className="text-lg">{t('settings.general.language.title')}</Text>
                 </XStack>
-                <XStack alignItems="center" space="$2">
-                  <Text color="$colorFocus">{getCurrentLanguage()}</Text>
-                  <ChevronRight size={24} color="$colorFocus" />
+                <XStack className="items-center gap-2">
+                  <Text>{getCurrentLanguage()}</Text>
+                  <RowRightArrow />
                 </XStack>
-              </PressableSettingRow>
-            </SettingGroup>
+              </PressableRow>
+            </Group>
           </YStack>
 
           {/* Privacy settings */}
@@ -92,7 +98,7 @@ export default function GeneralSettingsScreen() {
             </SettingGroup>
           </YStack>*/}
         </YStack>
-      </SettingContainer>
+      </Container>
     </SafeAreaContainer>
   )
 }

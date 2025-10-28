@@ -7,7 +7,8 @@ const WEB_SEARCH_PROVIDER_ICONS = {
   exa: require('@/assets/images/websearchIcons/exa.png'),
   bocha: require('@/assets/images/websearchIcons/bocha.png'),
   searxng: require('@/assets/images/websearchIcons/searxng.png'),
-  tavily: require('@/assets/images/websearchIcons/tavily.png')
+  tavily: require('@/assets/images/websearchIcons/tavily.png'),
+  zhipu: require('@/assets/images/websearchIcons/zhipu.png')
 }
 
 export function getWebSearchProviderIcon(providerId: string, isDark: boolean): any {

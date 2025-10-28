@@ -1,4 +1,4 @@
-import { File } from 'expo-file-system/next'
+import { File } from 'expo-file-system'
 import { isEmpty } from 'lodash'
 
 import {
@@ -81,7 +81,7 @@ export abstract class BaseApiClient<
    * 用于判断客户端是否支持特定功能，避免instanceof检查的类型收窄问题
    * 对于装饰器模式的客户端（如AihubmixAPIClient），应该返回其内部实际使用的客户端类型
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   public getClientCompatibilityType(_model?: Model): string[] {
     // 默认返回类的名称
     return [this.constructor.name]
@@ -307,7 +307,7 @@ export abstract class BaseApiClient<
 
         for (const fileBlock of textFileBlocks) {
           const file = fileBlock.file
-          const fileContent = new File(file.path).text().trim()
+          const fileContent = new File(file.path).textSync().trim()
           const fileNameRow = 'file: ' + file.origin_name + '\n\n'
           text = text + fileNameRow + fileContent + divider
         }

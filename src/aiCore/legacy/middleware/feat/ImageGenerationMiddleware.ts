@@ -1,4 +1,4 @@
-import { File } from 'expo-file-system/next'
+import { File } from 'expo-file-system'
 import OpenAI from 'openai'
 import { toFile } from 'openai/uploads'
 
@@ -50,9 +50,12 @@ export const ImageGenerationMiddleware: CompletionsMiddleware =
           const userImages = await Promise.all(
             userImageBlocks.map(async block => {
               if (!block.file) return null
-              const binaryData: Uint8Array = new File(block.file.path).bytes()
+              const binaryData: Uint8Array = await new File(block.file.path).bytes()
+              const standardUint8Array = new Uint8Array(binaryData)
               const mimeType = `${block.file.type}/${block.file.ext.slice(1)}`
-              return await toFile(new Blob([binaryData]), block.file.origin_name || 'image.png', { type: mimeType })
+              return await toFile(new Blob([standardUint8Array]), block.file.origin_name || 'image.png', {
+                type: mimeType
+              })
             })
           )
           imageFiles = imageFiles.concat(userImages.filter(Boolean) as Blob[])
@@ -67,7 +70,8 @@ export const ImageGenerationMiddleware: CompletionsMiddleware =
                 const binary = atob(b64)
                 const bytes = new Uint8Array(binary.length)
                 for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-                return await toFile(new Blob([bytes]), 'assistant_image.png', { type: 'image/png' })
+                const standardUint8Array = new Uint8Array(bytes)
+                return await toFile(new Blob([standardUint8Array]), 'assistant_image.png', { type: 'image/png' })
               })
             )
             imageFiles = imageFiles.concat(assistantImages.filter(Boolean) as Blob[])

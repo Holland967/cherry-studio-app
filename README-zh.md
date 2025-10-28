@@ -22,6 +22,7 @@
 - **状态管理**: Redux Toolkit
 
 ## 🚀 开发
+
 > 相关开发文档在docs中
 
 1. **克隆仓库**
@@ -50,10 +51,8 @@ npx drizzle-kit generate
 
 5. **启动应用**
 
-> 如果使用真机调试需要 `yarn remove expo-dev-client`
-> ⚠️提交pr前，不要将此包push到远程仓库
-
 ios:
+
 ```bash
 npx expo prebuild -p ios
 
@@ -63,6 +62,7 @@ npx expo run:ios -d
 ```
 
 android:
+
 ```bash
 npx expo prebuild -p android
 npx expo run:android -d

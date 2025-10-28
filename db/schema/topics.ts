@@ -1,6 +1,7 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { assistants } from './assistants'
+import { createUpdateTimestamps } from './columnHelpers'
 
 export const topics = sqliteTable(
   'topics',
@@ -10,12 +11,8 @@ export const topics = sqliteTable(
       .notNull()
       .references(() => assistants.id),
     name: text('name').notNull(),
-    created_at: text('created_at').notNull(),
-    updated_at: text('updated_at').notNull(),
-    messages: text('messages').notNull().default('[]'),
-    pinned: integer('pinned', { mode: 'boolean' }),
-    prompt: text('prompt'),
-    is_name_manually_edited: integer('is_name_manually_edited', { mode: 'boolean' })
+    isLoading: integer('isLoading', { mode: 'boolean' }),
+    ...createUpdateTimestamps
   },
   table => [
     index('idx_topics_assistant_id').on(table.assistant_id),

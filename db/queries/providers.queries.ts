@@ -2,81 +2,60 @@ import { eq } from 'drizzle-orm'
 
 import { loggerService } from '@/services/LoggerService'
 import { Provider } from '@/types/assistant'
-import { safeJsonParse } from '@/utils/json'
 
 import { db } from '..'
+import { transformDbToProvider, transformProviderToDb } from '../mappers'
 import { providers } from '../schema'
+import { buildExcludedSet } from '../utils/buildExcludedSet'
+
 const logger = loggerService.withContext('DataBase Providers')
 
 /**
- * 将数据库记录转换为 Provider 类型。
- * @param dbRecord - 从数据库检索的记录。
- * @returns 一个 Provider 对象。
- */
-export function transformDbToProvider(dbRecord: any): Provider {
-  return {
-    id: dbRecord.id,
-    type: dbRecord.type,
-    name: dbRecord.name,
-    apiKey: dbRecord.api_key,
-    apiHost: dbRecord.api_host,
-    apiVersion: dbRecord.api_version,
-    models: dbRecord.models ? safeJsonParse(dbRecord.models) : [],
-    enabled: !!dbRecord.enabled,
-    isSystem: !!dbRecord.is_system,
-    isAuthed: !!dbRecord.is_authed,
-    rateLimit: dbRecord.rate_limit,
-    isNotSupportArrayContent: !!dbRecord.is_not_support_array_content,
-    notes: dbRecord.notes
-  }
-}
-
-/**
- * 将 Provider 对象转换为数据库记录格式。
- * @param provider - Provider 对象。
- * @returns 一个适合数据库操作的对象。
- */
-function transformProviderToDb(provider: Provider): any {
-  return {
-    id: provider.id,
-    type: provider.type,
-    name: provider.name,
-    api_key: provider.apiKey,
-    api_host: provider.apiHost,
-    api_version: provider.apiVersion,
-    models: JSON.stringify(provider.models || []),
-    enabled: provider.enabled ? 1 : 0,
-    is_system: provider.isSystem ? 1 : 0,
-    is_authed: provider.isAuthed ? 1 : 0,
-    rate_limit: provider.rateLimit,
-    is_not_support_array_content: provider.isNotSupportArrayContent ? 1 : 0,
-    notes: provider.notes
-  }
-}
-
-/**
- * 更新或插入 Provider 数据到数据库。
- * @param providersToUpsert - 要更新或插入的 Provider 数组。
+ * 批量插入或更新 LLM 提供商配置
+ * @description 使用 upsert 模式处理提供商的新增或更新操作
+ * @param providersToUpsert - 待插入或更新的提供商数组
+ * @throws 当数据库操作失败时抛出错误
  */
 export async function upsertProviders(providersToUpsert: Provider[]) {
+  if (providersToUpsert.length === 0) return
+
   try {
     const dbRecords = providersToUpsert.map(transformProviderToDb)
-    const upsertPromises = dbRecords.map(record =>
-      db
-        .insert(providers)
-        .values(record)
-        .onConflictDoUpdate({
-          target: [providers.id],
-          set: record
-        })
-    )
-    await Promise.all(upsertPromises)
+
+    await db.transaction(async tx => {
+      const updateFields = buildExcludedSet(dbRecords[0])
+
+      await tx.insert(providers).values(dbRecords).onConflictDoUpdate({
+        target: providers.id,
+        set: updateFields
+      })
+    })
   } catch (error) {
     logger.error('Error in upsertProviders:', error)
     throw error
   }
 }
 
+/**
+ * 根据 ID 删除指定的提供商
+ * @param providerId - 提供商的唯一标识符
+ * @throws 当删除操作失败时抛出错误
+ */
+export async function deleteProvider(providerId: string): Promise<void> {
+  try {
+    await db.delete(providers).where(eq(providers.id, providerId))
+  } catch (error) {
+    logger.error('Error in deleteProvider:', error)
+    throw error
+  }
+}
+
+/**
+ * 根据 ID 获取指定提供商（异步）
+ * @param providerId - 提供商的唯一标识符
+ * @returns 如果找到则返回提供商对象，否则返回 undefined
+ * @throws 当查询操作失败时抛出错误
+ */
 export async function getProviderById(providerId: string): Promise<Provider | undefined> {
   try {
     const result = await db.select().from(providers).where(eq(providers.id, providerId)).limit(1)
@@ -92,6 +71,11 @@ export async function getProviderById(providerId: string): Promise<Provider | un
   }
 }
 
+/**
+ * 获取所有提供商配置
+ * @returns 返回所有提供商的数组，如果没有则返回空数组
+ * @throws 当查询操作失败时抛出错误
+ */
 export async function getAllProviders(): Promise<Provider[]> {
   try {
     const result = await db.select().from(providers)
@@ -107,9 +91,15 @@ export async function getAllProviders(): Promise<Provider[]> {
   }
 }
 
+/**
+ * 根据 ID 获取指定提供商（同步）
+ * @description 同步方式查询提供商，适用于需要立即获取结果的场景
+ * @param providerId - 提供商的唯一标识符
+ * @returns 如果找到则返回提供商对象，否则返回 undefined
+ * @throws 当查询操作失败时抛出错误
+ */
 export function getProviderByIdSync(providerId: string): Provider | undefined {
   try {
-    // 使用 .get() 方法来同步获取单个结果
     const result = db.select().from(providers).where(eq(providers.id, providerId)).get()
 
     if (!result) {
@@ -119,15 +109,6 @@ export function getProviderByIdSync(providerId: string): Provider | undefined {
     return transformDbToProvider(result)
   } catch (error) {
     logger.error('Error in getProviderById:', error)
-    throw error // 重新抛出错误以便上层调用者可以处理
-  }
-}
-
-export async function deleteProvider(providerId: string): Promise<void> {
-  try {
-    await db.delete(providers).where(eq(providers.id, providerId))
-  } catch (error) {
-    logger.error('Error in deleteProvider:', error)
     throw error
   }
 }

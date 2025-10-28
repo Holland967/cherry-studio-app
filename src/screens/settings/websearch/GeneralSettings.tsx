@@ -1,10 +1,9 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Input, Slider, XStack, YStack } from 'tamagui'
 
-import { SettingGroup, SettingGroupTitle, SettingRow, SettingRowTitle } from '@/components/settings'
-import { CustomSwitch } from '@/components/ui/Switch'
+import { Group, GroupTitle, Row, TextField, Text, YStack } from '@/componentsV2'
 import { useWebsearchSettings } from '@/hooks/useWebsearchProviders'
+import { Switch } from 'heroui-native'
 
 export default function GeneralSettings() {
   const { t } = useTranslation()
@@ -21,8 +20,13 @@ export default function GeneralSettings() {
   } = useWebsearchSettings()
 
   // Handler for search count change
-  const handleSearchCountChange = (value: number[]) => {
-    setSearchCount(value[0])
+  const handleSearchCountChange = (value: string) => {
+    const numValue = parseInt(value, 10)
+    if (!isNaN(numValue) && numValue >= 1 && numValue <= 20) {
+      setSearchCount(numValue).catch(console.error)
+    } else if (value === '') {
+      setSearchCount(1).catch(console.error)
+    }
   }
 
   // Handler for content limit change
@@ -30,52 +34,42 @@ export default function GeneralSettings() {
     const numValue = parseInt(value, 10)
 
     if (!isNaN(numValue)) {
-      setContentLimit(numValue)
+      setContentLimit(numValue).catch(console.error)
     } else if (value === '') {
-      setContentLimit(undefined)
+      setContentLimit(undefined).catch(console.error)
     }
   }
 
   return (
-    <YStack gap={8} paddingVertical={8}>
-      <SettingGroupTitle>{t('settings.general.title')}</SettingGroupTitle>
-      <SettingGroup>
-        <SettingRow>
-          <SettingRowTitle>{t('settings.websearch.contentLengthLimit')}</SettingRowTitle>
-          <Input
-            height={24}
-            minWidth={52}
-            paddingVertical={0}
-            value={contentLimit?.toString() || ''}
-            onChangeText={handleContentLimitChange}
-            fontSize={14}
-            lineHeight={14 * 1.2}
-          />
-        </SettingRow>
-        <SettingRow>
-          <YStack gap={10} flex={1}>
-            <XStack justifyContent="space-between">
-              <SettingRowTitle>{t('settings.websearch.searchCount')}</SettingRowTitle>
-              <SettingRowTitle>{searchCount}</SettingRowTitle>
-            </XStack>
-            <Slider value={[searchCount]} min={1} max={20} step={1} onValueChange={handleSearchCountChange}>
-              <Slider.Track backgroundColor="$green20">
-                <Slider.TrackActive backgroundColor="$green100" />
-              </Slider.Track>
-              <Slider.Thumb backgroundColor="$green100" borderWidth={0} size={16} index={0} circular />
-            </Slider>
-          </YStack>
-        </SettingRow>
+    <YStack className="gap-2 py-2">
+      <GroupTitle>{t('settings.general.title')}</GroupTitle>
+      <Group>
+        <Row>
+          <Text>{t('settings.websearch.contentLengthLimit')}</Text>
+          <TextField className="flex-1 max-w-20">
+            <TextField.Input value={contentLimit?.toString() || ''} onChangeText={handleContentLimitChange} />
+          </TextField>
+        </Row>
+        <Row>
+          <Text>{t('settings.websearch.searchCount')}</Text>
+          <TextField className="flex-1 max-w-20">
+            <TextField.Input value={searchCount.toString()} onChangeText={handleSearchCountChange} />
+          </TextField>
+        </Row>
 
-        <SettingRow>
-          <SettingRowTitle>{t('settings.websearch.searchWithDates')}</SettingRowTitle>
-          <CustomSwitch checked={searchWithDates} onCheckedChange={setSearchWithDates} />
-        </SettingRow>
-        <SettingRow>
-          <SettingRowTitle>{t('settings.websearch.overrideSearchService')}</SettingRowTitle>
-          <CustomSwitch checked={overrideSearchService} onCheckedChange={setOverrideSearchService} />
-        </SettingRow>
-      </SettingGroup>
+        <Row>
+          <Text>{t('settings.websearch.searchWithDates')}</Text>
+          <Switch color="success" isSelected={searchWithDates} onSelectedChange={setSearchWithDates}>
+            <Switch.Thumb colors={{ defaultBackground: 'white', selectedBackground: 'white' }} />
+          </Switch>
+        </Row>
+        <Row>
+          <Text>{t('settings.websearch.overrideSearchService')}</Text>
+          <Switch color="success" isSelected={overrideSearchService} onSelectedChange={setOverrideSearchService}>
+            <Switch.Thumb colors={{ defaultBackground: 'white', selectedBackground: 'white' }} />
+          </Switch>
+        </Row>
+      </Group>
     </YStack>
   )
 }

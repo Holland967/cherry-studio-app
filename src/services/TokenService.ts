@@ -8,47 +8,6 @@ import { findFileBlocks, getMainTextContent, getThinkingContent } from '@/utils/
 import { loggerService } from './LoggerService'
 
 const logger = loggerService.withContext('TokenService')
-interface MessageItem {
-  name?: string
-  role: 'system' | 'user' | 'assistant'
-  content: string
-}
-
-async function getFileContent(file: FileMetadata) {
-  if (!file) {
-    return ''
-  }
-
-  // if (file.type === FileTypes.TEXT) {
-  //   return await window.api.file.read(file.id + file.ext)
-  // }
-
-  return ''
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function getMessageParam(message: Message): Promise<MessageItem[]> {
-  const param: MessageItem[] = []
-
-  const content = await getMainTextContent(message)
-  const files = await findFileBlocks(message)
-
-  param.push({
-    role: message.role,
-    content
-  })
-
-  if (files.length > 0) {
-    for (const file of files) {
-      param.push({
-        role: 'assistant',
-        content: await getFileContent(file.file)
-      })
-    }
-  }
-
-  return param
-}
 
 /**
  * 估算文本内容的 token 数量

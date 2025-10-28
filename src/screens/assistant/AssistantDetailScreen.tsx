@@ -1,17 +1,20 @@
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native'
-import { ArrowLeftRight, PenLine } from '@tamagui/lucide-icons'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, View } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
-import { Text, XStack } from 'tamagui'
 
-import { DefaultProviderIcon } from '@/components/icons/DefaultProviderIcon'
-import { SettingContainer } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import { AvatarEditButton } from '@/components/ui/AvatarEditButton'
-import { DrawerGestureWrapper } from '@/components/ui/DrawerGestureWrapper'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
+import { DefaultProviderIcon } from '@/componentsV2/icons'
+import {
+  DrawerGestureWrapper,
+  SafeAreaContainer,
+  Container,
+  HeaderBar,
+  Text,
+  XStack,
+  AvatarEditButton
+} from '@/componentsV2'
+import { ArrowLeftRight, PenLine } from '@/componentsV2/icons/LucideIcon'
 import { useAssistant } from '@/hooks/useAssistant'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import AssistantDetailTabNavigator from '@/navigators/AssistantDetailTabNavigator'
@@ -43,9 +46,9 @@ export default function AssistantDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaContainer style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <SafeAreaContainer className="items-center justify-center">
         <DrawerGestureWrapper>
-          <View collapsable={false} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <View collapsable={false} className="flex-1 items-center justify-center">
             <ActivityIndicator />
           </View>
         </DrawerGestureWrapper>
@@ -55,9 +58,9 @@ export default function AssistantDetailScreen() {
 
   if (!assistant) {
     return (
-      <SafeAreaContainer style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <SafeAreaContainer className="flex-1 justify-center items-center">
         <DrawerGestureWrapper>
-          <View collapsable={false} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <View collapsable={false} className="flex-1 justify-center items-center">
             <Text>{t('assistants.error.notFound')}</Text>
           </View>
         </DrawerGestureWrapper>
@@ -68,14 +71,14 @@ export default function AssistantDetailScreen() {
   return (
     <SafeAreaContainer>
       <GestureDetector gesture={panGesture}>
-        <View collapsable={false} style={{ flex: 1 }}>
+        <View collapsable={false} className="flex-1">
           <HeaderBar
             title={!assistant?.emoji ? t('assistants.title.create') : t('assistants.title.edit')}
             onBackPress={() => navigation.goBack()}
           />
-          <View style={{ flex: 1 }}>
-            <SettingContainer>
-              <XStack justifyContent="center" alignItems="center" paddingBottom={20}>
+          <View className="flex-1">
+            <Container>
+              <XStack className="justify-center items-center pb-5">
                 <AvatarEditButton
                   content={assistant?.emoji || <DefaultProviderIcon />}
                   editIcon={assistant?.emoji ? <ArrowLeftRight size={24} /> : <PenLine size={24} />}
@@ -85,10 +88,10 @@ export default function AssistantDetailScreen() {
               </XStack>
 
               {/* Material Top Tabs Navigator */}
-              <View style={{ flex: 1 }}>
+              <View className="flex-1">
                 <AssistantDetailTabNavigator assistant={assistant} />
               </View>
-            </SettingContainer>
+            </Container>
           </View>
         </View>
       </GestureDetector>

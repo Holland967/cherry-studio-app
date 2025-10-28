@@ -4,7 +4,7 @@
  */
 
 import type { AssistantModelMessage, FilePart, ImagePart, ModelMessage, TextPart, UserModelMessage } from 'ai'
-import { File as ExpoFile } from 'expo-file-system/next'
+import { File as ExpoFile } from 'expo-file-system'
 
 import { isVisionModel } from '@/config/models'
 import { loggerService } from '@/services/LoggerService'
@@ -61,7 +61,7 @@ async function convertMessageToUserModelMessage(
           const image = new ExpoFile(imageBlock.file.path)
           parts.push({
             type: 'image',
-            image: image.base64(),
+            image: await image.base64(),
             mediaType: image.type || undefined
           })
         } catch (error) {

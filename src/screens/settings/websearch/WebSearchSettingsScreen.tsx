@@ -1,11 +1,9 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+import { View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
-import { View, YStack } from 'tamagui'
 
-import { SettingContainer } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
+import { Container, HeaderBar, SafeAreaContainer, YStack } from '@/componentsV2'
 
 import GeneralSettings from './GeneralSettings'
 import ProviderSettings from './ProviderSettings'
@@ -14,26 +12,17 @@ export default function WebSearchSettingsScreen() {
   const { t } = useTranslation()
 
   return (
-    <SafeAreaContainer style={{ flex: 1 }}>
-      <KeyboardAwareScrollView scrollEnabled={false} bottomOffset={40} style={{ flex: 1 }}>
+    <SafeAreaContainer className="flex-1">
+      <KeyboardAwareScrollView scrollEnabled={false} bottomOffset={40} className="flex-1">
         <HeaderBar title={t('settings.websearch.title')} />
-        <View flex={1}>
-          <SettingContainer>
-            <YStack gap={24} flex={1}>
+        <View className="flex-1">
+          <Container>
+            <YStack className="gap-6 flex-1">
               <ProviderSettings />
 
               <GeneralSettings />
-
-              {/*<BlacklistSettings
-                blacklistText={blacklistText}
-                onBlacklistTextChange={setBlacklistText}
-                subscriptions={blacklistSubscription}
-                onRefreshSubscription={handleRefreshSubscription}
-                onRefreshAllSubscriptions={handleRefreshAllSubscriptions}
-                onAddSubscription={handleAddSubscription}
-              />*/}
             </YStack>
-          </SettingContainer>
+          </Container>
         </View>
       </KeyboardAwareScrollView>
     </SafeAreaContainer>

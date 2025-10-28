@@ -1,64 +1,54 @@
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
-import { ChevronDown, Languages, MessageSquareMore, Rocket, Settings2 } from '@tamagui/lucide-icons'
+import { ChevronDown, Languages, MessageSquareMore, Rocket, Settings2 } from '@/componentsV2/icons/LucideIcon'
 import React, { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator } from 'react-native'
-import { Button, Text, XStack, YStack } from 'tamagui'
-import { Image } from 'tamagui'
+import { Button, useTheme } from 'heroui-native'
 
-import { SettingContainer, SettingHelpText } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import ModelSheet from '@/components/sheets/ModelSheet'
-import { IconButton } from '@/components/ui/IconButton'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
+import { Container, HeaderBar, Image, SafeAreaContainer, Text, XStack, YStack, IconButton } from '@/componentsV2'
 import { useAssistant } from '@/hooks/useAssistant'
-import { useTheme } from '@/hooks/useTheme'
 import { AssistantSettingsStackParamList } from '@/navigators/settings/AssistantSettingsStackNavigator'
 import { Assistant, Model } from '@/types/assistant'
 import { getModelOrProviderIcon } from '@/utils/icons'
+import { getBaseModelName } from '@/utils/naming'
+import ModelSheet from '@/componentsV2/features/Sheet/ModelSheet'
 
 function ModelPicker({ assistant, onPress }: { assistant: Assistant; onPress: () => void }) {
   const { t } = useTranslation()
   const { isDark } = useTheme()
-  const model = assistant?.model
+  const model = assistant?.defaultModel
 
   return (
     <Button
-      chromeless
-      width="100%"
-      height="100%"
-      paddingHorizontal={16}
-      paddingVertical={15}
-      onPress={onPress}
-      iconAfter={<ChevronDown size={16} />}
-      backgroundColor="$uiCardBackground">
-      <XStack flex={1} alignItems="center" overflow="hidden" justifyContent="space-between">
-        {model ? (
-          <XStack flex={1} alignItems="center" gap={8}>
-            <Image
-              borderRadius={99}
-              width={18}
-              height={18}
-              source={getModelOrProviderIcon(model.id, model.provider, isDark)}
-            />
-            <Text flexShrink={0} numberOfLines={1} maxWidth="60%" ellipsizeMode="tail" fontSize={14}>
-              {model.name}
+      variant="ghost"
+      className="w-full   bg-ui-card-background dark:bg-ui-card-background-dark px-3  justify-between"
+      onPress={onPress}>
+      <Button.Label>
+        <XStack className="flex-1 items-center gap-2 overflow-hidden">
+          {model ? (
+            <>
+              <Image
+                className="h-[18px] w-[18px] rounded-full"
+                source={getModelOrProviderIcon(model.id, model.provider, isDark)}
+              />
+              <Text numberOfLines={1} className="shrink-0 max-w-[60%] font-medium">
+                {getBaseModelName(model.name)}
+              </Text>
+              <Text className="opacity-45 font-semibold">|</Text>
+              <Text numberOfLines={1} className="shrink font-semibold opacity-45">
+                {t(`provider.${model.provider}`)}
+              </Text>
+            </>
+          ) : (
+            <Text numberOfLines={1} className="flex-1">
+              {t('settings.models.empty.label')}
             </Text>
-            <Text opacity={0.45} fontWeight="bold" fontSize={14}>
-              |
-            </Text>
-            <Text opacity={0.45} flexShrink={1} numberOfLines={1} ellipsizeMode="tail" fontWeight="bold" fontSize={14}>
-              {t(`provider.${model.provider}`)}
-            </Text>
-          </XStack>
-        ) : (
-          <Text flex={1} numberOfLines={1} ellipsizeMode="tail">
-            {t('settings.models.empty')}
-          </Text>
-        )}
-      </XStack>
+          )}
+        </XStack>
+      </Button.Label>
+      <ChevronDown size={18} className="text-text-secondary dark:text-text-secondary-dark opacity-90" />
     </Button>
   )
 }
@@ -86,32 +76,31 @@ function AssistantSettingItem({
 
   const handleModelChange = async (models: Model[]) => {
     const newModel = models[0]
-    await updateAssistant({ ...assistant, model: newModel })
+    await updateAssistant({ ...assistant, model: newModel, defaultModel: newModel })
   }
 
   return (
     <>
-      <YStack gap={8}>
-        <XStack justifyContent="space-between" height={20}>
-          <XStack alignItems="center" gap={8}>
+      <YStack className="gap-2">
+        <XStack className="items-center justify-between px-[10px]">
+          <XStack className="items-center gap-2">
             {icon}
-            <Text>{t(titleKey)}</Text>
+            <Text className="font-semibold text-text-secondary dark:text-text-secondary-dark">{t(titleKey)}</Text>
           </XStack>
           <IconButton
-            style={{ padding: 2 }}
-            icon={<Settings2 size={16} color="$textLink" />}
+            icon={<Settings2 size={16} className="text-text-link" />}
             onPress={() => navigation.navigate('AssistantDetailScreen', { assistantId })}
           />
         </XStack>
-        <XStack>
-          <ModelPicker assistant={assistant} onPress={() => sheetRef.current?.present()} />
-        </XStack>
-        <SettingHelpText>{t(descriptionKey)}</SettingHelpText>
+        <ModelPicker assistant={assistant} onPress={() => sheetRef.current?.present()} />
+        <Text className="px-[10px] text-text-secondary dark:text-text-secondary-dark opacity-70">
+          {t(descriptionKey)}
+        </Text>
       </YStack>
 
       <ModelSheet
         ref={sheetRef}
-        mentions={assistant.model ? [assistant.model] : []}
+        mentions={assistant.defaultModel ? [assistant.defaultModel] : []}
         setMentions={handleModelChange}
         multiple={false}
       />
@@ -130,7 +119,7 @@ export default function AssistantSettingsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaContainer style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <SafeAreaContainer className="items-center justify-center">
         <ActivityIndicator />
       </SafeAreaContainer>
     )
@@ -143,7 +132,7 @@ export default function AssistantSettingsScreen() {
       descriptionKey: 'settings.assistant.default_assistant.description',
       assistant: defaultAssistant,
       updateAssistant: updateDefaultAssistant,
-      icon: <MessageSquareMore size={16} color="$textSecondary" />
+      icon: <MessageSquareMore size={16} className="text-text-secondary dark:text-text-secondary-dark" />
     },
     {
       id: 'quick',
@@ -151,7 +140,7 @@ export default function AssistantSettingsScreen() {
       descriptionKey: 'settings.assistant.quick_assistant.description',
       assistant: quickAssistant,
       updateAssistant: updateQuickAssistant,
-      icon: <Rocket size={16} color="$textSecondary" />
+      icon: <Rocket size={16} className="text-text-secondary dark:text-text-secondary-dark" />
     },
     {
       id: 'translate',
@@ -159,14 +148,14 @@ export default function AssistantSettingsScreen() {
       descriptionKey: 'settings.assistant.translate_assistant.description',
       assistant: translateAssistant,
       updateAssistant: updateTranslateAssistant,
-      icon: <Languages size={16} color="$textSecondary" />
+      icon: <Languages size={16} className="text-text-secondary dark:text-text-secondary-dark" />
     }
   ]
 
   return (
     <SafeAreaContainer>
       <HeaderBar title={t('settings.assistant.title')} />
-      <SettingContainer>
+      <Container>
         {assistantItems.map(item => (
           <AssistantSettingItem
             key={item.id}
@@ -178,7 +167,7 @@ export default function AssistantSettingsScreen() {
             icon={item.icon}
           />
         ))}
-      </SettingContainer>
+      </Container>
     </SafeAreaContainer>
   )
 }

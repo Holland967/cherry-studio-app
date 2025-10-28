@@ -1,21 +1,14 @@
 import React, { memo } from 'react'
-import { View } from 'tamagui'
 
-import ImageItem from '@/components/message-input/preview-items/ImageItem'
-import ImageSkeleton from '@/components/ui/ImageSkeleton'
 import { ImageMessageBlock, MessageBlockStatus } from '@/types/message'
+import { ImageItem, ImageSkeleton } from '@/componentsV2'
 
 interface Props {
   block: ImageMessageBlock
 }
 
 const ImageBlock: React.FC<Props> = ({ block }) => {
-  if (block.status === MessageBlockStatus.PENDING)
-    return (
-      <View style={{ paddingHorizontal: 10 }}>
-        <ImageSkeleton />
-      </View>
-    )
+  if (block.status === MessageBlockStatus.PENDING) return <ImageSkeleton />
 
   const uploadedFile = block.file
 
@@ -24,11 +17,7 @@ const ImageBlock: React.FC<Props> = ({ block }) => {
   }
 
   if (uploadedFile) {
-    return (
-      <View style={{ paddingHorizontal: 10 }}>
-        <ImageItem file={uploadedFile} />
-      </View>
-    )
+    return <ImageItem file={uploadedFile} />
   }
 
   return null

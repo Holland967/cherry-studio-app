@@ -1,20 +1,22 @@
-import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { RouteProp, useRoute } from '@react-navigation/native'
-import { Eye, EyeOff, ShieldCheck } from '@tamagui/lucide-icons'
 import { ImpactFeedbackStyle } from 'expo-haptics'
-import { sortBy } from 'lodash'
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator } from 'react-native'
-import { Input, Stack, Text, XStack, YStack } from 'tamagui'
+import { Button, Spinner } from 'heroui-native'
 
-import ExternalLink from '@/components/ExternalLink'
-import { SettingContainer, SettingGroupTitle, SettingHelpText } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import { ApiCheckSheet } from '@/components/settings/providers/ApiCheckSheet'
-import { IconButton } from '@/components/ui/IconButton'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
-import { isEmbeddingModel } from '@/config/models'
+import {
+  Container,
+  ExternalLink,
+  GroupTitle,
+  HeaderBar,
+  SafeAreaContainer,
+  Text,
+  TextField,
+  XStack,
+  YStack
+} from '@/componentsV2'
+import { Eye, EyeOff, ShieldCheck, XCircle } from '@/componentsV2/icons/LucideIcon'
 import { PROVIDER_URLS } from '@/config/providers'
 import { useDialog } from '@/hooks/useDialog'
 import { useProvider } from '@/hooks/useProviders'
@@ -23,7 +25,7 @@ import { checkApi } from '@/services/ApiService'
 import { loggerService } from '@/services/LoggerService'
 import { ApiStatus, Model } from '@/types/assistant'
 import { haptic } from '@/utils/haptic'
-import { getModelUniqId } from '@/utils/model'
+import { ModelSelect } from '@/componentsV2/features/SettingsScreen/ModelSelect'
 const logger = loggerService.withContext('ApiServiceScreen')
 
 type ProviderSettingsRouteProp = RouteProp<ProvidersStackParamList, 'ApiServiceScreen'>
@@ -37,15 +39,12 @@ export default function ApiServiceScreen() {
   const { provider, isLoading, updateProvider } = useProvider(providerId)
 
   const [showApiKey, setShowApiKey] = useState(false)
-  const [selectedModel, setSelectedModel] = useState<Model | undefined>()
   const [checkApiStatus, setCheckApiStatus] = useState<ApiStatus>('idle')
   const [apiKey, setApiKey] = useState(provider?.apiKey || '')
   const [apiHost, setApiHost] = useState(provider?.apiHost || '')
 
-  const bottomSheetRef = useRef<BottomSheetModal>(null)
-
   // 当 provider 改变时更新本地状态
-  React.useEffect(() => {
+  useEffect(() => {
     if (provider) {
       setApiKey(provider.apiKey || '')
       setApiHost(provider.apiHost || '')
@@ -57,7 +56,7 @@ export default function ApiServiceScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaContainer style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <SafeAreaContainer className="items-center justify-center">
         <ActivityIndicator />
       </SafeAreaContainer>
     )
@@ -67,49 +66,32 @@ export default function ApiServiceScreen() {
     return (
       <SafeAreaContainer>
         <HeaderBar title={t('settings.provider.not_found')} />
-        <SettingContainer>
-          <Text textAlign="center" color="$gray10" paddingVertical={24}>
-            {t('settings.provider.not_found_message')}
-          </Text>
-        </SettingContainer>
+        <Container>
+          <Text className="text-center text-gray-400 py-6">{t('settings.provider.not_found_message')}</Text>
+        </Container>
       </SafeAreaContainer>
     )
   }
 
-  const selectOptions = !provider.models?.length
-    ? []
-    : [
-        {
-          label: provider.isSystem ? t(`provider.${provider.id}`) : provider.name,
-          title: provider.name,
-          options: sortBy(provider.models, 'name')
-            .filter(model => !isEmbeddingModel(model))
-            .map(model => ({
-              label: model.name,
-              value: getModelUniqId(model),
-              model
-            }))
-        }
-      ]
-
   const handleOpenBottomSheet = () => {
     haptic(ImpactFeedbackStyle.Medium)
-    bottomSheetRef.current?.present()
-  }
+    let selectedModel: Model | undefined
 
-  const handleBottomSheetClose = () => {
-    bottomSheetRef.current?.dismiss()
-  }
-
-  const handleModelChange = (value: string) => {
-    if (!value) {
-      setSelectedModel(undefined)
-      return
-    }
-
-    const allOptions = selectOptions.flatMap(group => group.options)
-    const foundOption = allOptions.find(opt => opt.value === value)
-    setSelectedModel(foundOption?.model)
+    dialog.open({
+      type: 'success',
+      title: t('settings.provider.api_check.title'),
+      content: (
+        <ModelSelect
+          provider={provider}
+          onSelectModel={model => {
+            selectedModel = model
+          }}
+        />
+      ),
+      onConFirm: async () => {
+        await handleStartModelCheck(selectedModel)
+      }
+    })
   }
 
   const toggleApiKeyVisibility = () => {
@@ -128,13 +110,13 @@ export default function ApiServiceScreen() {
   }
 
   // 模型检测处理
-  const handleStartModelCheck = async () => {
-    if (!selectedModel || !apiKey) {
+  const handleStartModelCheck = async (model: Model | undefined) => {
+    if (!model || !apiKey) {
       let errorKey = ''
 
-      if (!selectedModel && !apiKey) {
+      if (!model && !apiKey) {
         errorKey = 'model_api_key_empty'
-      } else if (!selectedModel) {
+      } else if (!model) {
         errorKey = 'model_empty'
       } else if (!apiKey) {
         errorKey = 'api_key_empty'
@@ -143,15 +125,14 @@ export default function ApiServiceScreen() {
       dialog.open({
         type: 'error',
         title: t('settings.provider.check_failed.title'),
-        content: t(`settings.provider.check_failed.${errorKey}`),
-        onConFirm: () => handleBottomSheetClose()
+        content: t(`settings.provider.check_failed.${errorKey}`)
       })
       return
     }
 
     try {
       setCheckApiStatus('processing')
-      await checkApi(provider, selectedModel)
+      await checkApi(provider, model)
       setCheckApiStatus('success')
     } catch (error: any) {
       logger.error('Model check failed:', error)
@@ -165,92 +146,71 @@ export default function ApiServiceScreen() {
       dialog.open({
         type: 'error',
         title: t('settings.provider.check_failed.title'),
-        content: errorMessage,
-        onConFirm: () => handleBottomSheetClose()
+        content: errorMessage
       })
-    } finally {
-      setTimeout(() => {
-        setCheckApiStatus('idle')
-        handleBottomSheetClose()
-      }, 500)
     }
   }
 
   return (
-    <SafeAreaContainer
-      style={{
-        flex: 1
-      }}>
+    <SafeAreaContainer className="flex-1">
       <HeaderBar title={t('settings.provider.api_service')} />
-
-      <SettingContainer>
+      <Container>
         {/* API Key 配置 */}
-        <YStack gap={8}>
-          <XStack paddingHorizontal={10} height={20} justifyContent="space-between" alignItems="center">
-            <SettingGroupTitle>{t('settings.provider.api_key')}</SettingGroupTitle>
-            <IconButton icon={<ShieldCheck size={16} color="$textLink" />} onPress={handleOpenBottomSheet} />
+        <YStack className="gap-2">
+          <XStack className="justify-between items-center">
+            <GroupTitle>{t('settings.provider.api_key.label')}</GroupTitle>
+            <Button size="sm" isIconOnly variant="ghost" onPress={handleOpenBottomSheet}>
+              <Button.Label>
+                {checkApiStatus === 'idle' && <ShieldCheck size={16} />}
+                {checkApiStatus === 'error' && <XCircle size={16} />}
+                {checkApiStatus === 'processing' && <Spinner size="sm" />}
+                {checkApiStatus === 'success' && (
+                  <ShieldCheck size={16} className="text-green-100 dark:text-green-dark-100" />
+                )}
+              </Button.Label>
+            </Button>
           </XStack>
 
-          <XStack paddingVertical={8} gap={8} position="relative">
-            <Input
-              paddingVertical={0}
-              flex={1}
-              placeholder={t('settings.provider.api_key.placeholder')}
-              secureTextEntry={!showApiKey}
-              paddingRight={48}
-              value={apiKey}
-              onChangeText={text => handleProviderConfigChange('apiKey', text)}
-              fontSize={14}
-              multiline={false}
-              numberOfLines={1}
-            />
-            <Stack
-              position="absolute"
-              right={10}
-              top="50%"
-              height={16}
-              width={16}
-              alignItems="center"
-              justifyContent="center"
-              zIndex={1}
-              onPress={toggleApiKeyVisibility}
-              cursor="pointer">
-              {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-            </Stack>
+          <XStack className="gap-2 relative">
+            <TextField className="flex-1">
+              <TextField.Input
+                className="h-12 pr-0"
+                value={apiKey}
+                secureTextEntry={!showApiKey}
+                placeholder={t('settings.provider.api_key.placeholder')}
+                onChangeText={text => handleProviderConfigChange('apiKey', text)}>
+                <TextField.InputEndContent>
+                  <Button size="sm" variant="ghost" isIconOnly onPress={toggleApiKeyVisibility}>
+                    <Button.Label>
+                      {showApiKey ? <EyeOff className="text-white" size={16} /> : <Eye size={16} />}
+                    </Button.Label>
+                  </Button>
+                </TextField.InputEndContent>
+              </TextField.Input>
+            </TextField>
           </XStack>
 
-          <XStack justifyContent="space-between">
-            <SettingHelpText>{t('settings.provider.api_key.tip')}</SettingHelpText>
-            <ExternalLink href={apiKeyWebsite} size={12}>
-              {t('settings.provider.api_key.get')}
-            </ExternalLink>
+          <XStack className="justify-between px-3">
+            <Text className="text-xs opacity-40">{t('settings.provider.api_key.tip')}</Text>
+            <ExternalLink href={apiKeyWebsite} content={t('settings.provider.api_key.get')} />
           </XStack>
         </YStack>
 
         {/* API Host 配置 */}
-        <YStack gap={8}>
-          <XStack paddingHorizontal={10} height={20} alignItems="center">
-            <SettingGroupTitle>{t('settings.provider.api_host')}</SettingGroupTitle>
+        <YStack className="gap-2">
+          <XStack className="pr-3 justify-between items-center">
+            <GroupTitle>{t('settings.provider.api_host.label')}</GroupTitle>
           </XStack>
-          <Input
-            paddingVertical={0}
-            placeholder={t('settings.provider.api_host.placeholder')}
-            value={apiHost}
-            onChangeText={text => handleProviderConfigChange('apiHost', text)}
-            multiline={false}
-            numberOfLines={1}
-          />
+          <TextField>
+            <TextField.Input
+              className="h-12"
+              placeholder={t('settings.provider.api_host.placeholder')}
+              value={apiHost}
+              onChangeText={text => handleProviderConfigChange('apiHost', text)}
+            />
+          </TextField>
         </YStack>
-      </SettingContainer>
-
-      <ApiCheckSheet
-        ref={bottomSheetRef}
-        selectedModel={selectedModel}
-        onModelChange={handleModelChange}
-        selectOptions={selectOptions}
-        onStartModelCheck={handleStartModelCheck}
-        checkApiStatus={checkApiStatus}
-      />
+      </Container>
     </SafeAreaContainer>
   )
 }

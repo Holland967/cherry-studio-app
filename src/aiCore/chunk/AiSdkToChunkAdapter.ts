@@ -92,7 +92,7 @@ export class AiSdkToChunkAdapter {
     chunk: TextStreamPart<any>,
     final: { text: string; reasoningContent: string; webSearchResults: any[]; reasoningId: string }
   ) {
-    logger.info(`AI SDK chunk type: ${chunk.type}`, chunk)
+    // logger.info(`AI SDK chunk type: ${chunk.type}`, chunk)
 
     switch (chunk.type) {
       // === 文本相关事件 ===
@@ -279,7 +279,7 @@ export class AiSdkToChunkAdapter {
       case 'source':
         if (chunk.sourceType === 'url') {
           // if (final.webSearchResults.length === 0) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
           const { sourceType: _, ...rest } = chunk
           final.webSearchResults.push(rest)
           // }

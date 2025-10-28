@@ -45,7 +45,7 @@ export interface FileMetadata {
   /**
    * 文件创建时间的ISO字符串
    */
-  created_at: string
+  created_at: number
   /**
    * 文件计数
    */

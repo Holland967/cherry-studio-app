@@ -1,24 +1,23 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-interface RuntimeState {
-  initialized: boolean
+export interface AppState {
   welcomeShown: boolean
 }
 
-const initialState: RuntimeState = { welcomeShown: false, initialized: false }
+const initialState: AppState = {
+  welcomeShown: false
+}
 
-const runtimeSlice = createSlice({
-  name: 'runtime',
+const appSlice = createSlice({
+  name: 'app',
   initialState,
   reducers: {
-    setInitialized(state, action: PayloadAction<boolean>) {
-      state.initialized = action.payload
-    },
     setWelcomeShown(state, action: PayloadAction<boolean>) {
       state.welcomeShown = action.payload
     }
   }
 })
 
-export const { setInitialized, setWelcomeShown } = runtimeSlice.actions
-export default runtimeSlice.reducer
+export const { setWelcomeShown } = appSlice.actions
+
+export default appSlice.reducer

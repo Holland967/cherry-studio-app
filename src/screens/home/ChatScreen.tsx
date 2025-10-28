@@ -1,72 +1,32 @@
 import { DrawerNavigationProp } from '@react-navigation/drawer'
-import { DrawerActions, RouteProp, useNavigation, useRoute } from '@react-navigation/native'
+import { DrawerActions, useNavigation } from '@react-navigation/native'
 import { ImpactFeedbackStyle } from 'expo-haptics'
-import React, { useCallback, useEffect } from 'react'
 import { ActivityIndicator, Platform, View } from 'react-native'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
-import { useDispatch } from 'react-redux'
-import { YStack } from 'tamagui'
+import { YStack, SafeAreaContainer } from '@/componentsV2'
+import { MessageInputContainer } from '@/componentsV2/features/ChatScreen/MessageInput/MessageInputContainer'
 
-import { HeaderBar } from '@/components/header-bar'
-import { MessageInput } from '@/components/message-input/MessageInput'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
-import { useTopic } from '@/hooks/useTopic'
-import { HomeStackParamList } from '@/navigators/HomeStackNavigator'
-import { getDefaultAssistant } from '@/services/AssistantService'
-import { loggerService } from '@/services/LoggerService'
-import { createNewTopic, getNewestTopic } from '@/services/TopicService'
-import { useAppSelector } from '@/store'
-import { setCurrentTopicId } from '@/store/topic'
+import { useAssistant } from '@/hooks/useAssistant'
+import { useBottom } from '@/hooks/useBottom'
+import { usePreference } from '@/hooks/usePreference'
+import { useCurrentTopic } from '@/hooks/useTopic'
 import { haptic } from '@/utils/haptic'
 
 import ChatContent from './ChatContent'
-import WelcomeContent from './WelcomeContent'
+import { ChatScreenHeader } from '@/componentsV2/features/ChatScreen/Header'
+import { loggerService } from '@/services/LoggerService'
+import React from 'react'
 
-type ChatScreenRouteProp = RouteProp<HomeStackParamList, 'ChatScreen'>
+const logger = loggerService.withContext('ChatScreen')
 
 const ChatScreen = () => {
-  const route = useRoute<ChatScreenRouteProp>()
   const navigation = useNavigation<DrawerNavigationProp<any>>()
-  const currentTopicId = useAppSelector(state => state.topic.currentTopicId)
-  const topicId = route.params?.topicId || currentTopicId
-  const { topic, isLoading } = useTopic(topicId)
-  const dispatch = useDispatch()
-  const logger = loggerService.withContext('ChatScreen')
+  const [topicId] = usePreference('topic.current_id')
+  const { currentTopic } = useCurrentTopic()
 
-  const initializeTopic = useCallback(async () => {
-    try {
-      logger.verbose('Initializing topic', { topicId })
-
-      const newestTopic = await getNewestTopic()
-
-      if (newestTopic) {
-        logger.info('Found existing newest topic', { topicId: newestTopic.id })
-        navigation.setParams({ topicId: newestTopic.id })
-      } else {
-        logger.info('Creating new topic with default assistant')
-        const defaultAssistant = await getDefaultAssistant()
-        const newTopic = await createNewTopic(defaultAssistant)
-        navigation.setParams({ topicId: newTopic.id })
-        dispatch(setCurrentTopicId(newTopic.id))
-        logger.info('New topic created', { topicId: newTopic.id })
-      }
-    } catch (error) {
-      logger.error('Failed to initialize topic', error, { topicId })
-    }
-  }, [topicId, navigation, dispatch, logger])
-
-  useEffect(() => {
-    // Only initialize if topicId indicates a new or missing topic
-    // 1. 'new' -> explicit new topic request
-    // 2. undefined -> after deleting all topics
-    // 3. '' -> initial state when topics are empty
-    const shouldInitialize = topicId === 'new' || topicId === undefined || topicId === ''
-
-    if (shouldInitialize) {
-      initializeTopic()
-    }
-  }, [topicId, initializeTopic])
+  const { assistant, isLoading: assistantLoading } = useAssistant(currentTopic?.assistantId || '')
+  const specificBottom = useBottom()
 
   // 处理侧滑手势
   const handleSwipeGesture = (event: any) => {
@@ -86,18 +46,16 @@ const ChatScreen = () => {
     }
   }
 
-  if (!topic || isLoading) {
+  if (!currentTopic || !assistant || assistantLoading) {
     return (
-      <SafeAreaContainer style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <SafeAreaContainer style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator />
       </SafeAreaContainer>
     )
   }
 
-  const hasMessage = topic.messages.length > 0
-
   return (
-    <SafeAreaContainer>
+    <SafeAreaContainer style={{ paddingBottom: 0 }}>
       <PanGestureHandler
         onGestureEvent={handleSwipeGesture}
         onHandlerStateChange={handleSwipeGesture}
@@ -105,15 +63,20 @@ const ChatScreen = () => {
         failOffsetY={[-20, 20]}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 10}>
-          <YStack flex={1}>
-            <HeaderBar topic={topic} />
+          keyboardVerticalOffset={Platform.OS === 'ios' ? -20 : -specificBottom}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <YStack className="flex-1">
+            <ChatScreenHeader topic={currentTopic} />
 
-            <View style={{ flex: 1, marginVertical: 10, paddingHorizontal: 0 }}>
-              {!hasMessage ? <WelcomeContent /> : <ChatContent key={topic.id} topic={topic} />}
+            <View
+              style={{
+                flex: 1
+              }}>
+              {/* ChatContent use key to re-render screen content */}
+              {/* if remove key, change topic will not re-render */}
+              <ChatContent key={topicId} topic={currentTopic} assistant={assistant} />
             </View>
-            <MessageInput topic={topic} />
+            <MessageInputContainer topic={currentTopic} />
           </YStack>
         </KeyboardAvoidingView>
       </PanGestureHandler>

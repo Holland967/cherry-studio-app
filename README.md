@@ -22,6 +22,7 @@ English | [中文](./README-zh.md)
 - **State Management**: Redux Toolkit
 
 ## 🚀 Development
+
 > Related development documentation is in the docs folder
 
 1. **Clone the repository**
@@ -50,10 +51,8 @@ npx drizzle-kit generate
 
 5. **Start the application**
 
-> If using physical device debugging, you need to `yarn remove expo-dev-client`
-> ⚠️Before submitting PR, don't push this package to the remote repository
-
 iOS:
+
 ```bash
 npx expo prebuild -p ios
 
@@ -63,9 +62,64 @@ npx expo run:ios -d
 ```
 
 Android:
+
 ```bash
 npx expo prebuild -p android
+
+cd android # Add Android SDK path to local.properties
+
 npx expo run:android -d
 ```
+
+### Android SDK Setup
+
+#### For windows users:
+
+```
+sdk.dir=C:\\Users\\UserName\\AppData\\Local\\Android\\sdk
+```
+
+or (for newer versions of Android Studio / IntelliJ IDEA):
+
+```
+sdk.dir=C\:\\Users\\USERNAME\\AppData\\Local\\Android\\sdk
+```
+
+Where USERNAME your PC user name. Also, make sure the folder is sdk or Sdk.
+
+Example:
+
+```
+sdk.dir=C:\\Users\\USERNAME\\AppData\\Local\\Android\\sdk
+```
+
+or:
+
+```
+sdk.dir=C\:\\Users\\USERNAME\\AppData\\Local\\Android\\Sdk
+```
+
+#### For Mac users:
+
+```
+sdk.dir = /Users/USERNAME/Library/Android/sdk
+```
+
+Where USERNAME is your OSX username.
+
+You can also use environment variables in your path, for example:
+
+```bash
+export ANDROID_HOME=/Users/$(whoami)/Library/Android/sdk
+export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools"
+```
+
+#### For Linux (Ubuntu) users:
+
+```
+sdk.dir = /home/USERNAME/Android/Sdk
+```
+
+Where USERNAME is your Linux username.
 
 > Please use physical devices or simulators for development, do not use Expo Go

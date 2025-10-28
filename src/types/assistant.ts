@@ -4,6 +4,7 @@ import { StreamTextParams } from './aiCoretypes'
 import { Chunk } from './chunk'
 import { Message } from './message'
 import { WebSearchProvider } from './websearch'
+import { MCPServer } from './mcp'
 
 export type Assistant = {
   id: string
@@ -25,6 +26,7 @@ export type Assistant = {
   knowledgeRecognition?: 'off' | 'on'
   tags?: string[] // 助手标签
   group?: string[] // 助手分组
+  mcpServers?: MCPServer[]
 }
 
 const ThinkModelTypes = [
@@ -96,12 +98,9 @@ export type Topic = {
   id: string
   assistantId: string
   name: string
-  createdAt: string
-  updatedAt: string
-  messages: Message[]
-  pinned?: boolean
-  prompt?: string
-  isNameManuallyEdited?: boolean
+  createdAt: number
+  updatedAt: number
+  isLoading?: boolean
 }
 
 export type ModelPricing = {

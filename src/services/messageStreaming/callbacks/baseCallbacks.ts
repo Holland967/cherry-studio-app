@@ -1,4 +1,3 @@
-import { fetchTopicNaming } from '@/services/ApiService'
 import { loggerService } from '@/services/LoggerService'
 import { estimateMessagesUsage } from '@/services/TokenService'
 import { Assistant } from '@/types/assistant'
@@ -14,7 +13,7 @@ import { formatErrorMessage, isAbortError } from '@/utils/error'
 import { createBaseMessageBlock, createErrorBlock } from '@/utils/messageUtils/create'
 import { findAllBlocks } from '@/utils/messageUtils/find'
 
-import { getMessageById, getMessagesByTopicId, upsertMessages } from '../../../../db/queries/messages.queries'
+import { messageDatabase } from '@database'
 import { BlockManager } from '../BlockManager'
 
 const logger = loggerService.withContext('Base Callbacks')
@@ -40,7 +39,7 @@ export const createBaseCallbacks = async (deps: BaseCallbacksDependencies) => {
     }
 
     // 如果没有活跃的block，从message中查找最新的block作为备选
-    const targetMessage = message || (await getMessagesByTopicId(assistantMsgId))
+    const targetMessage = message || (await messageDatabase.getMessagesByTopicId(assistantMsgId))
 
     if (targetMessage) {
       const allBlocks = await findAllBlocks(targetMessage)
@@ -104,7 +103,7 @@ export const createBaseCallbacks = async (deps: BaseCallbacksDependencies) => {
       await blockManager.handleBlockTransition(errorBlock, MessageBlockType.ERROR)
       const errorStatus = isErrorTypeAbort ? AssistantMessageStatus.SUCCESS : AssistantMessageStatus.ERROR
 
-      const toBeUpdatedMessage = await getMessageById(assistantMsgId)
+      const toBeUpdatedMessage = await messageDatabase.getMessageById(assistantMsgId)
 
       if (!toBeUpdatedMessage) {
         logger.error(`[upsertBlockReference] Message ${assistantMsgId} not found.`)
@@ -113,7 +112,7 @@ export const createBaseCallbacks = async (deps: BaseCallbacksDependencies) => {
 
       toBeUpdatedMessage.status = errorStatus
 
-      const updatedMessage = await upsertMessages(toBeUpdatedMessage)
+      const updatedMessage = await messageDatabase.upsertMessages(toBeUpdatedMessage)
 
       if (!updatedMessage) {
         logger.error(`[onError] Failed to update message ${toBeUpdatedMessage.id} in state.`)
@@ -125,7 +124,7 @@ export const createBaseCallbacks = async (deps: BaseCallbacksDependencies) => {
     },
 
     onComplete: async (status: AssistantMessageStatus, response?: Response) => {
-      const finalAssistantMsg = await getMessageById(assistantMsgId)
+      const finalAssistantMsg = await messageDatabase.getMessageById(assistantMsgId)
 
       if (!finalAssistantMsg) {
         logger.error(`[onComplete] Assistant message ${assistantMsgId} not found.`)
@@ -134,7 +133,7 @@ export const createBaseCallbacks = async (deps: BaseCallbacksDependencies) => {
 
       if (status === 'success' && finalAssistantMsg) {
         const userMsgId = finalAssistantMsg.askId
-        const orderedMsgs = await getMessagesByTopicId(topicId)
+        const orderedMsgs = await messageDatabase.getMessagesByTopicId(topicId)
         const userMsgIndex = orderedMsgs.findIndex(m => m.id === userMsgId)
         const contextForUsage = userMsgIndex !== -1 ? orderedMsgs.slice(0, userMsgIndex + 1) : []
         const finalContextWithAssistant = [...contextForUsage, finalAssistantMsg]
@@ -147,9 +146,6 @@ export const createBaseCallbacks = async (deps: BaseCallbacksDependencies) => {
           }
           await blockManager.smartBlockUpdate(possibleBlockId, changes, blockManager.lastBlockType!, true)
         }
-
-        // 更新topic的name
-        await fetchTopicNaming(topicId)
 
         if (
           response &&
@@ -175,7 +171,7 @@ export const createBaseCallbacks = async (deps: BaseCallbacksDependencies) => {
 
       const messageUpdates: Partial<Message> = { status, metrics: response?.metrics, usage: response?.usage }
 
-      await upsertMessages({ ...finalAssistantMsg, ...messageUpdates })
+      await messageDatabase.upsertMessages({ ...finalAssistantMsg, ...messageUpdates })
       await saveUpdatesToDB(assistantMsgId, topicId, messageUpdates, [])
       logger.debug('onComplete', messageUpdates)
     }

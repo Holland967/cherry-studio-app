@@ -5,21 +5,7 @@ import type { Provider as AiSdkProvider } from 'ai'
 import { loggerService } from '@/services/LoggerService'
 import { Provider } from '@/types/assistant'
 
-import { initializeNewProviders } from './providerInitialization'
-
 const logger = loggerService.withContext('ProviderFactory')
-
-/**
- * 初始化动态Provider系统
- * 在模块加载时自动注册新的providers
- */
-;(async () => {
-  try {
-    await initializeNewProviders()
-  } catch (error) {
-    logger.warn('Failed to initialize new providers:', error as Error)
-  }
-})()
 
 /**
  * 静态Provider映射表

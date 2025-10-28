@@ -1,13 +1,13 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet'
-import { Copy } from '@tamagui/lucide-icons'
+import { Copy } from '@/componentsV2/icons/LucideIcon'
 import * as Clipboard from 'expo-clipboard'
-import React, { forwardRef, useCallback, useRef, useState } from 'react'
+import React, { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ScrollView } from 'react-native'
+import { BackHandler, ScrollView, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Button, Separator, Text, View, XStack, YStack } from 'tamagui'
+import { Text, XStack, YStack } from '@/componentsV2'
 
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme } from 'heroui-native'
 import { getHttpMessageLabel } from '@/i18n/label'
 import {
   isSerializedAiSdkAPICallError,
@@ -130,22 +130,16 @@ const MessageErrorInfo: React.FC<{ block: ErrorMessageBlock; message: Message; o
   }
 
   return (
-    <Button
-      size="$5"
-      backgroundColor="$red2"
-      borderColor="$red5"
-      borderWidth={1}
-      pressStyle={{ backgroundColor: '$red3' }}
+    <TouchableOpacity
+      className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg my-1.5 p-4 active:bg-red-100 dark:active:bg-red-900"
       onPress={onShowDetail}>
-      <XStack justifyContent="space-between" width="100%" alignItems="center">
-        <Text flex={1} numberOfLines={1} color="$red11">
+      <XStack className="justify-between w-full items-center gap-2">
+        <Text className="flex-1 text-red-600 dark:text-red-400" numberOfLines={1}>
           {getAlertDescription()}
         </Text>
-        <Text color="$red10" fontSize="$3">
-          {t('common.detail')}
-        </Text>
+        <Text className="text-red-500 dark:text-red-500 text-sm">{t('common.detail')}</Text>
       </XStack>
-    </Button>
+    </TouchableOpacity>
   )
 }
 
@@ -162,6 +156,19 @@ const ErrorDetailSheet = forwardRef<BottomSheetModal, ErrorDetailSheetProps>(({ 
   const { isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const [copiedText, setCopiedText] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    if (!isVisible) return
+
+    const backAction = () => {
+      ;(ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
+      return true
+    }
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
+    return () => backHandler.remove()
+  }, [ref, isVisible])
 
   const copyErrorDetails = async () => {
     if (!error) return
@@ -202,21 +209,25 @@ const ErrorDetailSheet = forwardRef<BottomSheetModal, ErrorDetailSheetProps>(({ 
       }}
       handleIndicatorStyle={{
         backgroundColor: isDark ? '#f9f9f9ff' : '#202020ff'
-      }}>
+      }}
+      onDismiss={() => setIsVisible(false)}
+      onChange={index => setIsVisible(index >= 0)}>
       <BottomSheetScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
         showsVerticalScrollIndicator={false}>
-        <YStack paddingHorizontal={20} paddingTop={10} gap={16}>
-          <XStack justifyContent="space-between" alignItems="center">
-            <Text fontSize="$6" fontWeight="600">
-              {t('error.detail')}
-            </Text>
-            <Button size="$3" icon={Copy} onPress={copyErrorDetails} variant="outlined" disabled={!error}>
-              {copiedText ? t('common.copied') : t('common.copy')}
-            </Button>
+        <YStack className="px-5 pt-2.5 gap-4">
+          <XStack className="justify-between items-center">
+            <Text className="text-xl font-semibold">{t('error.detail')}</Text>
+            <TouchableOpacity
+              className={`flex-row items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg ${!error ? 'opacity-50' : ''}`}
+              onPress={copyErrorDetails}
+              disabled={!error}>
+              <Copy className="w-4 h-4" />
+              <Text className="text-sm">{copiedText ? t('common.copied') : t('common.copy')}</Text>
+            </TouchableOpacity>
           </XStack>
-          <Separator />
+          <View className="h-px bg-gray-200 dark:bg-gray-700" />
           {renderErrorDetails(error)}
         </YStack>
       </BottomSheetScrollView>
@@ -229,61 +240,35 @@ ErrorDetailSheet.displayName = 'ErrorDetailSheet'
 // Error detail components
 const ErrorDetailItem: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => {
   return (
-    <YStack gap={8}>
-      <Text fontSize="$3" fontWeight="600" color="$color11">
-        {label}:
-      </Text>
+    <YStack className="gap-2">
+      <Text className="text-sm font-semibold text-gray-600 dark:text-gray-400">{label}:</Text>
       {children}
     </YStack>
   )
 }
 
 const ErrorDetailValue: React.FC<{ children: React.ReactNode; isCode?: boolean }> = ({ children, isCode = false }) => {
-  const { isDark } = useTheme()
   return (
-    <View
-      backgroundColor={isDark ? '$gray2' : '$gray3'}
-      borderRadius="$2"
-      padding="$2"
-      borderWidth={1}
-      borderColor={isDark ? '$gray5' : '$gray6'}>
-      <Text fontSize="$2" fontFamily={isCode ? '$mono' : '$body'} color="$color12" style={{ wordBreak: 'break-word' }}>
-        {children}
-      </Text>
+    <View className="bg-gray-100 dark:bg-gray-800 rounded-md p-2 border border-gray-200 dark:border-gray-700">
+      <Text className={`text-xs text-gray-900 dark:text-gray-100 ${isCode ? 'font-mono' : ''}`}>{children}</Text>
     </View>
   )
 }
 
 const StackTrace: React.FC<{ stack: string }> = ({ stack }) => {
-  const { isDark } = useTheme()
   return (
-    <View
-      backgroundColor={isDark ? '$red2' : '$red3'}
-      borderRadius="$2"
-      padding="$3"
-      borderWidth={1}
-      borderColor="$red8">
-      <Text fontSize="$2" fontFamily="$mono" color="$red11" style={{ lineHeight: 20 }}>
-        {stack}
-      </Text>
+    <View className="bg-red-50 dark:bg-red-950 rounded-md p-3 border border-red-300 dark:border-red-700">
+      <Text className="text-xs font-mono text-red-700 dark:text-red-300 leading-5">{stack}</Text>
     </View>
   )
 }
 
 const JsonViewer: React.FC<{ data: any }> = ({ data }) => {
-  const { isDark } = useTheme()
   const formatted = typeof data === 'string' ? data : JSON.stringify(data, null, 2)
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-      <View
-        backgroundColor={isDark ? '$gray2' : '$gray3'}
-        borderRadius="$2"
-        padding="$2"
-        borderWidth={1}
-        borderColor={isDark ? '$gray5' : '$gray6'}>
-        <Text fontSize="$2" fontFamily="$mono" color="$color12">
-          {formatted}
-        </Text>
+      <View className="bg-gray-100 dark:bg-gray-800 rounded-lg p-2 border border-gray-200 dark:border-gray-700">
+        <Text className="text-xs font-mono text-gray-900 dark:text-gray-100">{formatted}</Text>
       </View>
     </ScrollView>
   )
@@ -292,7 +277,7 @@ const JsonViewer: React.FC<{ data: any }> = ({ data }) => {
 const BuiltinError = ({ error }: { error: SerializedError }) => {
   const { t } = useTranslation()
   return (
-    <YStack gap={16}>
+    <YStack className="gap-4">
       {error.name && (
         <ErrorDetailItem label={t('error.name')}>
           <ErrorDetailValue>{error.name}</ErrorDetailValue>
@@ -315,7 +300,7 @@ const BuiltinError = ({ error }: { error: SerializedError }) => {
 const AiSdkErrorBase = ({ error }: { error: SerializedAiSdkError }) => {
   const { t } = useTranslation()
   return (
-    <YStack gap={16}>
+    <YStack className="gap-4">
       <BuiltinError error={error} />
       {error.cause && (
         <ErrorDetailItem label={t('error.cause')}>
@@ -330,7 +315,7 @@ const AiSdkError = ({ error }: { error: SerializedAiSdkErrorUnion }) => {
   const { t } = useTranslation()
 
   return (
-    <YStack gap={16}>
+    <YStack className="gap-4">
       <AiSdkErrorBase error={error} />
 
       {(isSerializedAiSdkAPICallError(error) || isSerializedAiSdkDownloadError(error)) && (

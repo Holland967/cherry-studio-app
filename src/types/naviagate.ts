@@ -1,4 +1,5 @@
 import { DrawerNavigationProp } from '@react-navigation/drawer'
+import type { NavigatorScreenParams } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 
 import { AssistantStackParamList } from '@/navigators/AssistantStackNavigator'
@@ -9,18 +10,8 @@ import { GeneralSettingsStackParamList } from '@/navigators/settings/GeneralSett
 import { ProvidersStackParamList } from '@/navigators/settings/ProvidersStackNavigator'
 import { WebSearchStackParamList } from '@/navigators/settings/WebSearchStackNavigator'
 import { SettingsStackParamList } from '@/navigators/SettingsStackNavigator'
-
-// Root Stack Navigator (MainStackNavigator)
-export type RootStackParamList = {
-  WelcomeScreen: undefined
-  HomeScreen: { screen: string; params: { topicId: string } } | undefined // This is actually the AppDrawerNavigator
-  // ChatScreen: { topicId: string }
-  // TopicScreen: undefined
-  // AssistantScreen: undefined
-  // AssistantMarketScreen: undefined
-  // AssistantDetailScreen: { assistantId: string; tab?: string }
-  // Settings: { screen: string; params?: any } | undefined
-}
+import { McpStackParamList } from '@/navigators/McpStackNavigator'
+import { WelcomeStackParamList } from '@/navigators/WelcomeStackNavigator'
 
 // App Drawer Navigator
 export type AppDrawerParamList = {
@@ -40,6 +31,13 @@ export type AppDrawerParamList = {
     | { screen: 'AssistantMarketScreen' }
     | { screen: 'AssistantDetailScreen'; params: { assistantId: string; tab?: string } }
     | undefined
+  Mcp: { screen: 'McpMarketScreen' }
+}
+
+// Root Stack Navigator (MainStackNavigator)
+export type RootStackParamList = {
+  Welcome: NavigatorScreenParams<WelcomeStackParamList> | undefined
+  HomeScreen: NavigatorScreenParams<AppDrawerParamList> | undefined
 }
 
 // Navigation Props
@@ -49,7 +47,9 @@ export type DrawerNavigationProps = DrawerNavigationProp<AppDrawerParamList>
 // Nested Navigator Props
 export type HomeNavigationProps = StackNavigationProp<HomeStackParamList>
 export type AssistantNavigationProps = StackNavigationProp<AssistantStackParamList>
+export type McpNavigationProps = StackNavigationProp<McpStackParamList>
 export type SettingsNavigationProps = StackNavigationProp<SettingsStackParamList>
+export type WelcomeNavigationProps = StackNavigationProp<WelcomeStackParamList>
 
 // Settings Sub-Navigator Props
 export type GeneralSettingsNavigationProps = StackNavigationProp<GeneralSettingsStackParamList>

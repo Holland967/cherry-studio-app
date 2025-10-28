@@ -1,4 +1,3 @@
-/* eslint-disable no-var */
 import { Store } from '@reduxjs/toolkit'
 
 import { RootState } from '@/store'

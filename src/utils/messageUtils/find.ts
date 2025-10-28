@@ -11,7 +11,7 @@ import {
   type TranslationMessageBlock
 } from '@/types/message'
 
-import { getBlockById } from '../../../db/queries/messageBlocks.queries'
+import { messageBlockDatabase } from '@database'
 
 export const findAllBlocks = async (message: Message): Promise<MessageBlock[]> => {
   if (!message || !message.blocks || message.blocks.length === 0) {
@@ -21,7 +21,7 @@ export const findAllBlocks = async (message: Message): Promise<MessageBlock[]> =
   const allBlocks: MessageBlock[] = []
 
   for (const blockId of message.blocks) {
-    const block = await getBlockById(blockId)
+    const block = await messageBlockDatabase.getBlockById(blockId)
 
     if (block) {
       allBlocks.push(block)
@@ -44,7 +44,7 @@ export const findMainTextBlocks = async (message: Message): Promise<MainTextMess
   const textBlocks: MainTextMessageBlock[] = []
 
   for (const blockId of message.blocks) {
-    const block = await getBlockById(blockId)
+    const block = await messageBlockDatabase.getBlockById(blockId)
 
     if (block && block.type === MessageBlockType.MAIN_TEXT) {
       textBlocks.push(block as MainTextMessageBlock)
@@ -67,7 +67,7 @@ export const findThinkingBlocks = async (message: Message): Promise<ThinkingMess
   const thinkingBlocks: ThinkingMessageBlock[] = []
 
   for (const blockId of message.blocks) {
-    const block = await getBlockById(blockId)
+    const block = await messageBlockDatabase.getBlockById(blockId)
 
     if (block && block.type === MessageBlockType.THINKING) {
       thinkingBlocks.push(block as ThinkingMessageBlock)
@@ -90,7 +90,7 @@ export const findImageBlocks = async (message: Message): Promise<ImageMessageBlo
   const imageBlocks: ImageMessageBlock[] = []
 
   for (const blockId of message.blocks) {
-    const block = await getBlockById(blockId)
+    const block = await messageBlockDatabase.getBlockById(blockId)
 
     if (block && block.type === MessageBlockType.IMAGE) {
       imageBlocks.push(block as ImageMessageBlock)
@@ -113,7 +113,7 @@ export const findFileBlocks = async (message: Message): Promise<FileMessageBlock
   const fileBlocks: FileMessageBlock[] = []
 
   for (const blockId of message.blocks) {
-    const block = await getBlockById(blockId)
+    const block = await messageBlockDatabase.getBlockById(blockId)
 
     if (block && block.type === MessageBlockType.FILE) {
       fileBlocks.push(block as FileMessageBlock)
@@ -230,7 +230,7 @@ export const findCitationBlocks = async (message: Message): Promise<CitationMess
   const citationBlocks: CitationMessageBlock[] = []
 
   for (const blockId of message.blocks) {
-    const block = await getBlockById(blockId)
+    const block = await messageBlockDatabase.getBlockById(blockId)
 
     if (block && block.type === MessageBlockType.CITATION) {
       citationBlocks.push(block as CitationMessageBlock)
@@ -253,7 +253,7 @@ export const findTranslationBlocks = async (message: Message): Promise<Translati
   const translationBlocks: TranslationMessageBlock[] = []
 
   for (const blockId of message.blocks) {
-    const block = await getBlockById(blockId)
+    const block = await messageBlockDatabase.getBlockById(blockId)
 
     if (block && block.type === MessageBlockType.TRANSLATION) {
       translationBlocks.push(block as TranslationMessageBlock)

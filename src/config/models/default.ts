@@ -27,16 +27,16 @@ export const SYSTEM_MODELS: Record<SystemProviderId | 'defaultModel', Model[]> =
   ],
   cherryin: [
     {
-      id: 'glm-4.5-flash',
-      name: 'GLM-4.5-Flash',
+      id: 'openai/gpt-5',
+      name: 'GPT5',
       provider: 'cherryin',
-      group: 'GLM-4.5'
+      group: 'OpenAI'
     },
     {
-      id: 'Qwen/Qwen3-8B',
-      name: 'Qwen3-8B',
+      id: 'anthropic/claude-sonnet-4.5',
+      name: 'Claude-Sonnet-4.5',
       provider: 'cherryin',
-      group: 'Qwen'
+      group: 'Anthropic'
     }
   ],
   // vertexai: [],

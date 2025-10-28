@@ -1,13 +1,11 @@
-import { Camera, CircleUserRound } from '@tamagui/lucide-icons'
+import { Camera, CircleUserRound } from '@/componentsV2/icons/LucideIcon'
 import * as ImagePicker from 'expo-image-picker'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { TouchableOpacity } from 'react-native'
-import { Avatar, Card, Input, Separator, Text, XStack, YStack } from 'tamagui'
 
-import { SettingContainer } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
+import { Card } from 'heroui-native'
+import { HeaderBar, Text, XStack, YStack, SafeAreaContainer, Container, Image, TextField } from '@/componentsV2'
 import { useDialog } from '@/hooks/useDialog'
 import { useSettings } from '@/hooks/useSettings'
 import { loggerService } from '@/services/LoggerService'
@@ -33,7 +31,7 @@ export default function PersonalScreen() {
 
         if (selectedImage.base64) {
           const base64Image = `data:image/jpeg;base64,${selectedImage.base64}`
-          setAvatar(base64Image)
+          await setAvatar(base64Image)
         }
       }
     } catch (error) {
@@ -49,55 +47,40 @@ export default function PersonalScreen() {
   return (
     <SafeAreaContainer>
       <HeaderBar title={t('settings.personal.title')} />
-      <SettingContainer>
-        <Card elevate bordered padding={16} borderRadius={14}>
-          <YStack gap={16}>
-            <XStack alignItems="center" justifyContent="center" marginTop={8}>
+      <Container>
+        <Card className="p-4 rounded-2xl bg-ui-card-background dark:bg-ui-card-background-dark">
+          <YStack className="gap-6">
+            <XStack className="items-center justify-center mt-2">
               <TouchableOpacity onPress={handleAvatarPress} activeOpacity={0.8}>
-                <XStack position="relative">
-                  <Avatar circular size={96}>
-                    <Avatar.Image accessibilityLabel="Avatar" src={avatar || require('@/assets/images/favicon.png')} />
-                    <Avatar.Fallback delayMs={400} backgroundColor="$blue10" />
-                  </Avatar>
-                  <XStack
-                    position="absolute"
-                    bottom={0}
-                    right={0}
-                    backgroundColor="$blue10"
-                    padding={6}
-                    borderRadius={999}
-                    borderWidth={2}
-                    borderColor="#FFFFFF">
-                    <Camera size={14} color="#FFFFFF" />
+                <XStack className="relative">
+                  <Image
+                    className="w-24 h-24 rounded-full"
+                    source={avatar ? { uri: avatar } : require('@/assets/images/favicon.png')}
+                  />
+                  <XStack className="absolute bottom-0 right-0 bg-blue-100 p-1.5 rounded-full border-2 border-white">
+                    <Camera className="text-white" size={14} />
                   </XStack>
                 </XStack>
               </TouchableOpacity>
             </XStack>
 
-            <Separator />
-
-            <XStack justifyContent="space-between" alignItems="center">
-              <XStack gap={6} alignItems="center">
+            <XStack className="gap-2 justify-between items-center rounded-2xl py-0 pl-3.5">
+              <XStack className="gap-1.5 items-center">
                 <CircleUserRound />
-                <Text fontWeight="600">{t('settings.personal.name')}</Text>
+                <Text>{t('settings.personal.name')}</Text>
               </XStack>
 
-              <Input
-                value={userName}
-                onChangeText={setUserName}
-                placeholder={t('settings.personal.namePlaceholder')}
-                flex={1}
-                marginLeft={12}
-                borderRadius={8}
-                borderColor="$gray10"
-                backgroundColor="$backgroundPrimary"
-                height={40}
-                fontSize={14}
-              />
+              <TextField className="flex-1">
+                <TextField.Input
+                  value={userName}
+                  onChangeText={setUserName}
+                  placeholder={t('settings.personal.namePlaceholder')}
+                />
+              </TextField>
             </XStack>
           </YStack>
         </Card>
-      </SettingContainer>
+      </Container>
     </SafeAreaContainer>
   )
 }

@@ -4,10 +4,11 @@ import '@/i18n'
 import { createDrawerNavigator, DrawerNavigationOptions } from '@react-navigation/drawer'
 import React from 'react'
 
-import CustomDrawerContent from '@/components/menu/CustomDrawerContent'
 import AssistantStackNavigator from '@/navigators/AssistantStackNavigator'
 import HomeStackNavigator from '@/navigators/HomeStackNavigator'
 import { Width } from '@/utils/device'
+import CustomDrawerContent from '@/componentsV2/features/Menu/CustomDrawerContent'
+import McpStackNavigator from './McpStackNavigator'
 
 const Drawer = createDrawerNavigator()
 
@@ -17,6 +18,7 @@ export default function AppDrawerNavigator() {
       {/* Main grouped navigators */}
       <Drawer.Screen name="Home" options={options} component={HomeStackNavigator} />
       <Drawer.Screen name="Assistant" options={options} component={AssistantStackNavigator} />
+      <Drawer.Screen name="Mcp" options={options} component={McpStackNavigator} />
 
       {/* Individual screens for backward compatibility */}
       {/*<Drawer.Screen name="ChatScreen" options={options} component={ChatScreen} />

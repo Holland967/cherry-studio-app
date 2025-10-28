@@ -1,6 +1,6 @@
-import { FC, memo, useMemo } from 'react'
-import React from 'react'
-import { View, XStack } from 'tamagui'
+import React, { FC, memo, useMemo } from 'react'
+import { XStack } from '@/componentsV2'
+import { View } from 'react-native'
 
 import { loggerService } from '@/services/LoggerService'
 import {
@@ -69,25 +69,25 @@ const prepareBlocksForRender = (blocks: MessageBlock[]) => {
 const MessageBlockRenderer: FC<MessageBlockRendererProps> = ({ blocks, message }) => {
   const { contentBlocks, citationBlocks } = useMemo(() => prepareBlocksForRender(blocks), [blocks])
   return (
-    <View flex={1} width="100%" maxWidth="100%" style={{ gap: 5 }}>
+    <View className="gap-2">
       {contentBlocks.map(blockOrGroup => {
         if (Array.isArray(blockOrGroup)) {
           const groupKey = blockOrGroup[0]?.id || 'media-group'
           return (
-            <View key={groupKey} width="100%">
-              <XStack flexWrap="wrap" gap="5" width="100%">
-                {blockOrGroup.map(block => {
-                  switch (block.type) {
-                    case MessageBlockType.IMAGE:
-                      return <ImageBlock key={block.id} block={block} />
-                    case MessageBlockType.FILE:
-                      return <FileBlock key={block.id} block={block} />
-                    default:
-                      return null
-                  }
-                })}
-              </XStack>
-            </View>
+            <XStack
+              key={groupKey}
+              className={`flex-wrap gap-2 mt-2.5 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              {blockOrGroup.map(block => {
+                switch (block.type) {
+                  case MessageBlockType.IMAGE:
+                    return <ImageBlock key={block.id} block={block} />
+                  case MessageBlockType.FILE:
+                    return <FileBlock key={block.id} block={block} />
+                  default:
+                    return null
+                }
+              })}
+            </XStack>
           )
         }
 

@@ -1,10 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Text, XStack, YStack } from 'tamagui'
 
-import { SettingContainer } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
+import { Container, HeaderBar, PressableRow, SafeAreaContainer, Text, XStack, YStack } from '@/componentsV2'
 import { themeOptions } from '@/config/theme'
 import { useSettings } from '@/hooks/useSettings'
 
@@ -13,40 +10,33 @@ export default function ThemeSettingsScreen() {
   const { theme: currentTheme, setTheme: setCurrentTheme } = useSettings()
 
   return (
-    <SafeAreaContainer style={{ flex: 1 }}>
+    <SafeAreaContainer className="flex-1">
       <HeaderBar title={t('settings.general.theme.title')} />
-      <SettingContainer>
-        <YStack flex={1} gap={12} paddingHorizontal={16}>
+      <Container>
+        <YStack className="flex-1 gap-3 px-4">
           {themeOptions.map(opt => (
-            <XStack
+            <PressableRow
               key={opt.value}
-              onPress={() => setCurrentTheme(opt.value)}
-              alignItems="center"
-              justifyContent="space-between"
-              padding={16}
-              borderRadius={8}
-              backgroundColor="$uiCardBackground"
-              pressStyle={{ opacity: 0.7 }}>
-              <XStack alignItems="center">
-                <Text fontSize={16}>{t(opt.label)}</Text>
+              onPress={() => setCurrentTheme(opt.value).catch(console.error)}
+              className="bg-ui-card-background dark:bg-ui-card-background-dark p-4 rounded-xl">
+              <XStack className="items-center">
+                <Text className="text-base">{t(opt.label)}</Text>
               </XStack>
 
               <XStack
-                width={20}
-                height={20}
-                borderRadius={10}
-                borderWidth={2}
-                borderColor={currentTheme === opt.value ? '$textPrimary' : '$textSecondary'}
-                alignItems="center"
-                justifyContent="center">
+                className={`w-5 h-5 rounded-full border-2 items-center justify-center ${
+                  currentTheme === opt.value
+                    ? 'border-gray-900 dark:border-gray-100'
+                    : 'border-gray-400 dark:border-gray-600'
+                }`}>
                 {currentTheme === opt.value && (
-                  <XStack width={10} height={10} borderRadius={5} backgroundColor="$textPrimary" />
+                  <XStack className="w-2.5 h-2.5 rounded-full bg-gray-900 dark:bg-gray-100" />
                 )}
               </XStack>
-            </XStack>
+            </PressableRow>
           ))}
         </YStack>
-      </SettingContainer>
+      </Container>
     </SafeAreaContainer>
   )
 }

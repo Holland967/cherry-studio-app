@@ -2,84 +2,80 @@ import { eq } from 'drizzle-orm'
 
 import { loggerService } from '@/services/LoggerService'
 import { Assistant } from '@/types/assistant'
-import { safeJsonParse } from '@/utils/json'
 
 import { db } from '..'
+import { transformDbToAssistant, transformAssistantToDb } from '../mappers'
 import { assistants } from '../schema'
-import { transformDbToTopic } from './topics.queries'
+import { buildExcludedSet } from '../utils/buildExcludedSet'
 
 const logger = loggerService.withContext('DataBase Assistants')
 
 /**
- * 将数据库记录转换为 Assistant 类型。
- * @param dbRecord - 从数据库检索的记录。
- * @returns 一个 Assistant 对象。
+ * 批量插入或更新助手记录
+ * @description 使用 upsert 模式，如果助手 ID 已存在则更新，否则插入新记录
+ * @param assistantsToUpsert - 待插入或更新的助手数组
+ * @throws 当数据库操作失败时抛出错误
  */
-export function transformDbToAssistant(dbRecord: any): Assistant {
-  const topics = Array.isArray(dbRecord.topics) ? dbRecord.topics.map(transformDbToTopic) : []
-  return {
-    id: dbRecord.id,
-    name: dbRecord.name,
-    prompt: dbRecord.prompt,
-    // knowledgeIds: safeJsonParse(dbRecord.knowledge_ids, []),
-    type: dbRecord.type,
-    emoji: dbRecord.emoji,
-    description: dbRecord.description,
-    model: safeJsonParse(dbRecord.model),
-    defaultModel: safeJsonParse(dbRecord.default_model),
-    settings: safeJsonParse(dbRecord.settings),
-    enableWebSearch: !!dbRecord.enable_web_search,
-    webSearchProviderId: dbRecord.websearch_provider_id,
-    enableGenerateImage: !!dbRecord.enable_generate_image,
-    // mcpServers: safeJsonParse(dbRecord.mcp_servers),
-    knowledgeRecognition: dbRecord.knowledge_recognition,
-    tags: safeJsonParse(dbRecord.tags, []),
-    group: safeJsonParse(dbRecord.group, []),
-    topics: topics
+export async function upsertAssistants(assistantsToUpsert: Assistant[]) {
+  if (assistantsToUpsert.length === 0) return
+
+  try {
+    const dbRecords = assistantsToUpsert.map(transformAssistantToDb)
+
+    await db.transaction(async tx => {
+      const updateFields = buildExcludedSet(dbRecords[0])
+
+      await tx.insert(assistants).values(dbRecords).onConflictDoUpdate({
+        target: assistants.id,
+        set: updateFields
+      })
+    })
+  } catch (error) {
+    logger.error('Error upserting assistants:', error)
+    throw error
   }
 }
 
 /**
- * 将 Assistant 对象转换为数据库记录格式。
- * @param assistant - Assistant 对象。
- * @returns 一个适合数据库操作的对象。
+ * 根据 ID 删除指定助手
+ * @param id - 助手的唯一标识符
+ * @throws 当删除操作失败时抛出错误
  */
-function transformAssistantToDb(assistant: Assistant): any {
-  return {
-    id: assistant.id,
-    name: assistant.name,
-    prompt: assistant.prompt,
-    // knowledge_ids: assistant.knowledgeIds ? JSON.stringify(assistant.knowledgeIds) : null,
-    type: assistant.type,
-    emoji: assistant.emoji,
-    description: assistant.description,
-    model: assistant.model ? JSON.stringify(assistant.model) : null,
-    default_model: assistant.defaultModel ? JSON.stringify(assistant.defaultModel) : null,
-    settings: assistant.settings ? JSON.stringify(assistant.settings) : null,
-    enable_web_search: assistant.enableWebSearch ? 1 : 0,
-    websearch_provider_id: assistant.webSearchProviderId === undefined ? null : assistant.webSearchProviderId,
-    enable_generate_image: assistant.enableGenerateImage ? 1 : 0,
-    // mcp_servers: assistant.mcpServers ? JSON.stringify(assistant.mcpServers) : null,
-    knowledge_recognition: assistant.knowledgeRecognition,
-    tags: assistant.tags ? JSON.stringify(assistant.tags) : null,
-    group: assistant.group ? JSON.stringify(assistant.group) : null
+export async function deleteAssistantById(id: string) {
+  try {
+    await db.delete(assistants).where(eq(assistants.id, id))
+  } catch (error) {
+    logger.error(`Error deleting assistant with ID ${id}:`, error)
+    throw error
   }
 }
 
 /**
- * 获取所有助手。
- * @returns 一个包含所有 Assistant 对象的数组。
+ * 获取所有助手
+ * @description 查询所有助手并关联查询其主题数据
+ * @returns 返回所有助手的数组
+ * @throws 当查询操作失败时抛出错误
  */
 export async function getAllAssistants(): Promise<Assistant[]> {
   try {
-    const result = await db.select().from(assistants)
-    return result.map(transformDbToAssistant)
+    const results = await db.query.assistants.findMany({
+      with: {
+        topics: true
+      }
+    })
+    return results.map(transformDbToAssistant)
   } catch (error) {
     logger.error('Error getting all assistants:', error)
     throw error
   }
 }
 
+/**
+ * 获取所有外部助手
+ * @description 查询类型为 'external' 的助手，并关联查询其主题数据
+ * @returns 返回外部助手的数组
+ * @throws 当查询操作失败时抛出错误
+ */
 export async function getExternalAssistants(): Promise<Assistant[]> {
   try {
     const results = await db.query.assistants.findMany({
@@ -95,6 +91,12 @@ export async function getExternalAssistants(): Promise<Assistant[]> {
   }
 }
 
+/**
+ * 根据 ID 获取指定助手
+ * @param id - 助手的唯一标识符
+ * @returns 如果找到则返回助手对象，否则返回 null
+ * @throws 当查询操作失败时抛出错误
+ */
 export async function getAssistantById(id: string): Promise<Assistant | null> {
   try {
     const result = await db.select().from(assistants).where(eq(assistants.id, id)).limit(1)
@@ -106,40 +108,6 @@ export async function getAssistantById(id: string): Promise<Assistant | null> {
     return transformDbToAssistant(result[0])
   } catch (error) {
     logger.error('Error getting assistant by ID:', error)
-    throw error
-  }
-}
-
-/**
- *
- * @param assistantsToUpsert 要插入或更新的助手数组。
- * @returns 无返回值。
- * @description 此函数将尝试插入或更新助手记录到数据库中。
- */
-export async function upsertAssistants(assistantsToUpsert: Assistant[]) {
-  try {
-    const dbRecords = assistantsToUpsert.map(transformAssistantToDb)
-    const upsertPromises = dbRecords.map(record =>
-      db
-        .insert(assistants)
-        .values(record)
-        .onConflictDoUpdate({
-          target: [assistants.id],
-          set: record
-        })
-    )
-    await Promise.all(upsertPromises)
-  } catch (error) {
-    logger.error('Error upserting assistants:', error)
-    throw error
-  }
-}
-
-export async function deleteAssistantById(id: string) {
-  try {
-    await db.delete(assistants).where(eq(assistants.id, id))
-  } catch (error) {
-    logger.error(`Error deleting assistant with ID ${id}:`, error)
     throw error
   }
 }

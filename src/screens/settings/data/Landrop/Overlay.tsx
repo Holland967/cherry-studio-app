@@ -9,7 +9,7 @@ const offsetY = 100
 // 为顶部图标和文本留出空间，假设它们占用约20px的高度
 const topOffset = 20
 
-const outer = rrect(rect(18, topOffset + 22, width - 36, height - topOffset), 0, 0)
+const outer = rrect(rect(14, topOffset + 15, width - 28, height - topOffset), 0, 0)
 const inner = rrect(
   rect(width / 2 - innerDimension / 2, height / 2 - innerDimension / 2 - offsetY, innerDimension, innerDimension),
   50,

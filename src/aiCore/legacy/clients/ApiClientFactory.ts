@@ -4,13 +4,13 @@ import { Provider } from '@/types/assistant'
 import { AihubmixAPIClient } from './aihubmix/AihubmixAPIClient'
 import { AnthropicAPIClient } from './anthropic/AnthropicAPIClient'
 import { BaseApiClient } from './BaseApiClient'
-import { CherryinAPIClient } from './cherryin/CherryinAPIClient'
 import { GeminiAPIClient } from './gemini/GeminiAPIClient'
 import { NewAPIClient } from './newapi/NewAPIClient'
 import { OpenAIAPIClient } from './openai/OpenAIApiClient'
 import { OpenAIResponseAPIClient } from './openai/OpenAIResponseAPIClient'
 import { PPIOAPIClient } from './ppio/PPIOAPIClient'
 import { ZhipuAPIClient } from './zhipu/ZhipuAPIClient'
+import { CherryinAPIClient } from './cherryai/CherryaiAPIClient'
 
 const logger = loggerService.withContext('ApiClientFactory')
 
@@ -32,7 +32,7 @@ export class ApiClientFactory {
     let instance: BaseApiClient
 
     // 首先检查特殊的 Provider ID
-    if (provider.id === 'cherryin') {
+    if (provider.id === 'cherryai') {
       instance = new CherryinAPIClient(provider) as BaseApiClient
       return instance
     }

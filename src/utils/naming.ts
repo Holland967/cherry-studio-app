@@ -1,3 +1,6 @@
+import { getProviderLabel } from '@/i18n/label'
+import { isSystemProvider, Provider } from '@/types/assistant'
+
 /**
  * 从模型 ID 中提取默认组名。
  * 规则如下：
@@ -70,5 +73,122 @@ export const getBaseModelName = (id: string, delimiter: string = '/'): string =>
  * @returns {string} 小写的基础名称
  */
 export const getLowerBaseModelName = (id: string, delimiter: string = '/'): string => {
-  return getBaseModelName(id, delimiter).toLowerCase()
+  const baseModelName = getBaseModelName(id, delimiter).toLowerCase()
+
+  // for openrouter
+  if (baseModelName.endsWith(':free')) {
+    return baseModelName.replace(':free', '')
+  }
+
+  return baseModelName
+}
+
+/**
+ * 获取模型服务商名称，根据是否内置服务商来决定要不要翻译
+ * @param provider 服务商
+ * @returns 描述性的名字
+ */
+export const getFancyProviderName = (provider: Provider) => {
+  return isSystemProvider(provider) ? getProviderLabel(provider.id) : provider.name
+}
+
+/**
+ * 用于获取 avatar 名字的辅助函数，会取出字符串的第一个字符，支持表情符号。
+ * @param {string} str 输入字符串
+ * @returns {string} 第一个字符，或者返回空字符串
+ */
+export function firstLetter(str: string): string {
+  const match = str?.match(/\p{L}\p{M}*|\p{Emoji_Presentation}|\p{Emoji}\uFE0F/u)
+  return match ? match[0] : ''
+}
+
+/**
+ * 移除字符串开头的表情符号。
+ * @param {string} str 输入字符串
+ * @returns {string} 移除开头表情符号后的字符串
+ */
+export function removeLeadingEmoji(str: string): string {
+  const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)+/u
+  return str.replace(emojiRegex, '').trim()
+}
+
+/**
+ * 提取字符串开头的表情符号。
+ * @param {string} str 输入字符串
+ * @returns {string} 开头的表情符号，如果没有则返回空字符串
+ */
+export function getLeadingEmoji(str: string): string {
+  const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)+/u
+  const match = str.match(emojiRegex)
+  return match ? match[0] : ''
+}
+
+/**
+ * 检查字符串是否为纯表情符号。
+ * @param {string} str 输入字符串
+ * @returns {boolean} 如果字符串是纯表情符号则返回 true，否则返回 false
+ */
+export function isEmoji(str: string): boolean {
+  if (str.startsWith('data:')) {
+    return false
+  }
+
+  if (str.startsWith('http')) {
+    return false
+  }
+
+  const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)+$/u
+  const match = str.match(emojiRegex)
+  return !!match
+}
+
+/**
+ * 从话题名称中移除特殊字符：
+ * - 替换换行符为空格。
+ * @param {string} str 输入字符串
+ * @returns {string} 处理后的字符串
+ */
+export function removeSpecialCharactersForTopicName(str: string): string {
+  return str.replace(/["'\r\n]+/g, ' ').trim()
+}
+
+/**
+ * 获取字符串的第一个字符。
+ * @param {string} str 输入字符串
+ * @returns {string} 第一个字符，或者空字符串
+ */
+export function getFirstCharacter(str: string): string {
+  // 使用 for...of 循环来获取第一个字符
+  for (const char of str) {
+    return char
+  }
+
+  return ''
+}
+
+/**
+ * 用于简化文本。按照给定长度限制截断文本，考虑语义边界。
+ * @param {string} text 输入文本
+ * @param {number} [maxLength=50] 最大长度，默认为 50
+ * @returns {string} 处理后的简短文本
+ */
+export function getBriefInfo(text: string, maxLength: number = 50): string {
+  // 去除空行
+  const noEmptyLinesText = text.replace(/\n\s*\n/g, '\n')
+
+  // 检查文本是否超过最大长度
+  if (noEmptyLinesText.length <= maxLength) {
+    return noEmptyLinesText
+  }
+
+  // 找到最近的单词边界
+  let truncatedText = noEmptyLinesText.slice(0, maxLength)
+  const lastSpaceIndex = truncatedText.lastIndexOf(' ')
+
+  if (lastSpaceIndex !== -1) {
+    truncatedText = truncatedText.slice(0, lastSpaceIndex)
+  }
+
+  // 截取前面的内容，并在末尾添加 "..."
+  return truncatedText + '...'
 }

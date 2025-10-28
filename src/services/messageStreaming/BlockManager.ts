@@ -1,7 +1,6 @@
 import { AssistantMessageStatus, MessageBlock, MessageBlockStatus, MessageBlockType } from '@/types/message'
 
-import { updateOneBlock, upsertBlocks } from '../../../db/queries/messageBlocks.queries'
-import { getMessageById, upsertMessages } from '../../../db/queries/messages.queries'
+import { messageBlockDatabase, messageDatabase } from '@database'
 import { loggerService } from '../LoggerService'
 
 const logger = loggerService.withContext('Block Manager')
@@ -22,8 +21,8 @@ interface BlockManagerDependencies {
   assistantMsgId: string
   topicId: string
   // 节流器管理从外部传入
-  throttledBlockUpdate: (id: string, blockUpdate: any) => void
-  cancelThrottledBlockUpdate: (id: string) => void
+  throttledBlockUpdate: (id: string, blockUpdate: Partial<MessageBlock>) => Promise<void>
+  cancelThrottledBlockUpdate: (id: string) => Promise<void>
 }
 
 export class BlockManager {
@@ -77,23 +76,23 @@ export class BlockManager {
     if (isBlockTypeChanged || isComplete) {
       // 如果块类型改变，则取消上一个块的节流更新
       if (isBlockTypeChanged && this._activeBlockInfo) {
-        this.deps.cancelThrottledBlockUpdate(this._activeBlockInfo.id)
+        await this.deps.cancelThrottledBlockUpdate(this._activeBlockInfo.id)
       }
 
       // 如果当前块完成，则取消当前块的节流更新
       if (isComplete) {
-        this.deps.cancelThrottledBlockUpdate(blockId)
+        await this.deps.cancelThrottledBlockUpdate(blockId)
         this._activeBlockInfo = null // 块完成时清空activeBlockInfo
       } else {
         this._activeBlockInfo = { id: blockId, type: blockType } // 更新活跃块信息
       }
 
-      await updateOneBlock({ id: blockId, changes })
+      await messageBlockDatabase.updateOneBlock({ id: blockId, changes })
       this.deps.saveUpdatedBlockToDB(blockId, this.deps.assistantMsgId, this.deps.topicId)
       this._lastBlockType = blockType
     } else {
       this._activeBlockInfo = { id: blockId, type: blockType } // 更新活跃块信息
-      this.deps.throttledBlockUpdate(blockId, changes)
+      await this.deps.throttledBlockUpdate(blockId, changes)
     }
   }
 
@@ -105,9 +104,9 @@ export class BlockManager {
     this._lastBlockType = newBlockType
     this._activeBlockInfo = { id: newBlock.id, type: newBlockType } // 设置新的活跃块信息
 
-    await upsertBlocks(newBlock)
+    await messageBlockDatabase.upsertBlocks(newBlock)
     // change message status
-    const toBeUpdatedMessage = await getMessageById(newBlock.messageId)
+    const toBeUpdatedMessage = await messageDatabase.getMessageById(newBlock.messageId)
 
     if (!toBeUpdatedMessage) {
       logger.error(`[upsertBlockReference] Message ${newBlock.messageId} not found.`)
@@ -128,7 +127,7 @@ export class BlockManager {
       toBeUpdatedMessage.status = AssistantMessageStatus.PROCESSING
     }
 
-    const updatedMessage = await upsertMessages(toBeUpdatedMessage)
+    const updatedMessage = await messageDatabase.upsertMessages(toBeUpdatedMessage)
 
     if (!updatedMessage) {
       logger.error(`[handleBlockTransition] Failed to update message ${toBeUpdatedMessage.id} in state.`)

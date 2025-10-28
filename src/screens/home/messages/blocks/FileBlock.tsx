@@ -1,20 +1,14 @@
-import { memo } from 'react'
-import React from 'react'
-import { View } from 'tamagui'
+import React, { memo } from 'react'
 
-import FileItem from '@/components/message-input/preview-items/FileItem'
 import { FileMessageBlock } from '@/types/message'
+import { FileItem } from '@/componentsV2'
 
 interface Props {
   block: FileMessageBlock
 }
 
 const FileBlock: React.FC<Props> = ({ block }) => {
-  return (
-    <View>
-      <FileItem file={block.file} />
-    </View>
-  )
+  return <FileItem file={block.file} />
 }
 
 export default memo(FileBlock)

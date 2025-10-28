@@ -4,8 +4,7 @@ import { ExternalToolResult } from '@/types'
 import { Chunk, ChunkType } from '@/types/chunk'
 import { GenerateImageResponse } from '@/types/image'
 import { MCPToolResponse } from '@/types/mcp'
-import { Response } from '@/types/message'
-import { AssistantMessageStatus } from '@/types/message'
+import { Response, AssistantMessageStatus } from '@/types/message'
 import { WebSearchResponse } from '@/types/websearch'
 const logger = loggerService.withContext('StreamProcessingService')
 

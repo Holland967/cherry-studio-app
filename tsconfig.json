@@ -2,14 +2,17 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "noImplicitAny": false,
+    "esModuleInterop": true,
     "jsx": "react",
     "strict": true,
     "baseUrl": "src",
     "paths": {
       "@/*": ["./*"],
-      "@mcp-trace/trace-core": ["../packages/mcp-trace/trace-core"],
-      "@mcp-trace/trace-node": ["../packages/mcp-trace/trace-node"]
+      "@db/*": ["../db/*"],
+      "@db": ["../db/index"],
+      "@database/*": ["./database/*"],
+      "@database": ["./database/index"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "nativewind-env.d.ts"]
 }

@@ -1,5 +1,5 @@
 import React, { memo } from 'react'
-import { View } from 'tamagui'
+import { View } from 'react-native'
 
 import { MainTextMessageBlock } from '@/types/message'
 

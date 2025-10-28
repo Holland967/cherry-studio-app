@@ -1,16 +1,12 @@
 import { DrawerActions, useNavigation } from '@react-navigation/native'
-import { Menu, MessageSquareDiff } from '@tamagui/lucide-icons'
 import { ImpactFeedbackStyle } from 'expo-haptics'
 import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, View } from 'react-native'
-import { YStack } from 'tamagui'
 
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import { GroupedTopicList } from '@/components/topic/GroupTopicList'
-import { DrawerGestureWrapper } from '@/components/ui/DrawerGestureWrapper'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
-import { SearchInput } from '@/components/ui/SearchInput'
+import { Menu, MessageSquareDiff } from '@/componentsV2/icons/LucideIcon'
+import { YStack, HeaderBar, TopicList, SafeAreaContainer, DrawerGestureWrapper, SearchInput } from '@/componentsV2'
+
 import { useSearch } from '@/hooks/useSearch'
 import { useTopics } from '@/hooks/useTopic'
 import { getDefaultAssistant } from '@/services/AssistantService'
@@ -30,7 +26,7 @@ export default function TopicScreen() {
   } = useSearch(
     topics,
     useCallback(topic => [topic.name], []),
-    { delay: 300 }
+    { delay: 100 }
   )
 
   const handleAddNewTopic = async () => {
@@ -46,9 +42,9 @@ export default function TopicScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaContainer style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <SafeAreaContainer className="items-center justify-center">
         <DrawerGestureWrapper>
-          <View collapsable={false} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <View collapsable={false} className="flex-1 items-center justify-center">
             <ActivityIndicator />
           </View>
         </DrawerGestureWrapper>
@@ -57,9 +53,9 @@ export default function TopicScreen() {
   }
 
   return (
-    <SafeAreaContainer style={{ flex: 1 }}>
+    <SafeAreaContainer className="flex-1">
       <DrawerGestureWrapper>
-        <View collapsable={false} style={{ flex: 1 }}>
+        <View collapsable={false} className="flex-1">
           <HeaderBar
             title={t('topics.title.recent')}
             leftButton={{
@@ -71,15 +67,15 @@ export default function TopicScreen() {
               onPress: handleAddNewTopic
             }}
           />
-          <YStack flex={1} gap={15}>
-            <View style={{ paddingHorizontal: 20 }}>
+          <YStack className="flex-1 gap-[15px]">
+            <View className="px-5">
               <SearchInput
                 placeholder={t('common.search_placeholder')}
                 value={searchText}
                 onChangeText={setSearchText}
               />
             </View>
-            <GroupedTopicList topics={filteredTopics} enableScroll={true} />
+            <TopicList topics={filteredTopics} enableScroll={true} />
           </YStack>
         </View>
       </DrawerGestureWrapper>

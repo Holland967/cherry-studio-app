@@ -1,47 +1,44 @@
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { DrawerActions, useNavigation } from '@react-navigation/native'
-import { FlashList } from '@shopify/flash-list'
-import { Menu } from '@tamagui/lucide-icons'
 import { ImpactFeedbackStyle } from 'expo-haptics'
 import React, { useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
-import { Text, YStack } from 'tamagui'
+import { ActivityIndicator, View } from 'react-native'
 
-import AssistantItem from '@/components/assistant/AssistantItem'
-import AssistantItemSkeleton from '@/components/assistant/AssistantItemSkeleton'
-import AssistantItemSheet from '@/components/assistant/market/AssistantItemSheet'
-import { UnionPlusIcon } from '@/components/icons/UnionPlusIcon'
-import { SettingContainer } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import { DrawerGestureWrapper } from '@/components/ui/DrawerGestureWrapper'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
-import { SearchInput } from '@/components/ui/SearchInput'
+import {
+  DrawerGestureWrapper,
+  SafeAreaContainer,
+  Container,
+  HeaderBar,
+  Text,
+  YStack,
+  SearchInput
+} from '@/componentsV2'
+import { Menu, Plus, Store } from '@/componentsV2/icons/LucideIcon'
 import { useExternalAssistants } from '@/hooks/useAssistant'
 import { useSearch } from '@/hooks/useSearch'
-import { useTopics } from '@/hooks/useTopic'
 import { createAssistant } from '@/services/AssistantService'
 import { Assistant } from '@/types/assistant'
 import { DrawerNavigationProps } from '@/types/naviagate'
-import { getAssistantWithTopic } from '@/utils/assistants'
 import { haptic } from '@/utils/haptic'
+import AssistantItem from '@/componentsV2/features/Assistant/AssistantItem'
+import AssistantItemSheet from '@/componentsV2/features/Assistant/AssistantItemSheet'
+import { FlashList } from '@shopify/flash-list'
 
 export default function AssistantScreen() {
   const { t } = useTranslation()
   const navigation = useNavigation<DrawerNavigationProps>()
 
-  const { topics } = useTopics()
   const { assistants, isLoading } = useExternalAssistants()
-  const assistantWithTopics = getAssistantWithTopic(assistants, topics)
 
   const {
     searchText,
     setSearchText,
     filteredItems: filteredAssistants
   } = useSearch(
-    assistantWithTopics,
+    assistants,
     useCallback((assistant: Assistant) => [assistant.name, assistant.description || ''], []),
-    { delay: 300 }
+    { delay: 100 }
   )
 
   const bottomSheetRef = useRef<BottomSheetModal>(null)
@@ -51,6 +48,11 @@ export default function AssistantScreen() {
     haptic(ImpactFeedbackStyle.Medium)
     setSelectedAssistant(assistant)
     bottomSheetRef.current?.present()
+  }
+
+  const onNavigateToMarketScreen = () => {
+    haptic(ImpactFeedbackStyle.Medium)
+    navigation.navigate('Assistant', { screen: 'AssistantMarketScreen' })
   }
 
   const onAddAssistant = async () => {
@@ -72,57 +74,57 @@ export default function AssistantScreen() {
     navigation.navigate('Home', { screen: 'ChatScreen', params: { topicId } })
   }
 
+  if (isLoading) {
+    return (
+      <SafeAreaContainer style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator />
+      </SafeAreaContainer>
+    )
+  }
+
   return (
-    <SafeAreaContainer style={{ paddingBottom: 0 }}>
+    <SafeAreaContainer className="pb-0">
       <DrawerGestureWrapper>
-        <View collapsable={false} style={{ flex: 1 }}>
+        <View collapsable={false} className="flex-1">
           <HeaderBar
             title={t('assistants.title.mine')}
             leftButton={{
               icon: <Menu size={24} />,
               onPress: handleMenuPress
             }}
-            rightButton={{
-              icon: <UnionPlusIcon size={24} />,
-              onPress: onAddAssistant
-            }}
+            rightButtons={[
+              {
+                icon: <Store size={24} />,
+                onPress: onNavigateToMarketScreen
+              },
+              {
+                icon: <Plus size={24} />,
+                onPress: onAddAssistant
+              }
+            ]}
           />
-          <SettingContainer padding={0} gap={10}>
-            <View style={{ paddingHorizontal: 16 }}>
+          <Container className="p-0">
+            <View className="px-4">
               <SearchInput
                 placeholder={t('common.search_placeholder')}
                 value={searchText}
                 onChangeText={setSearchText}
               />
             </View>
-
-            {isLoading ? (
-              <FlashList
-                data={Array.from({ length: 5 })}
-                renderItem={() => <AssistantItemSkeleton />}
-                keyExtractor={(_, index) => `skeleton-${index}`}
-                estimatedItemSize={80}
-                ItemSeparatorComponent={() => <YStack height={10} />}
-              />
-            ) : (
-              <FlashList
-                showsVerticalScrollIndicator={false}
-                data={filteredAssistants}
-                renderItem={({ item }) => (
-                  <AssistantItem assistant={item} onAssistantPress={handleAssistantItemPress} />
-                )}
-                keyExtractor={item => item.id}
-                estimatedItemSize={80}
-                ItemSeparatorComponent={() => <YStack height={10} />}
-                ListEmptyComponent={
-                  <YStack flex={1} justifyContent="center" alignItems="center" paddingTop="$8">
-                    <Text>{t('settings.assistant.empty')}</Text>
-                  </YStack>
-                }
-                contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 30 }}
-              />
-            )}
-          </SettingContainer>
+            <FlashList
+              showsVerticalScrollIndicator={false}
+              data={filteredAssistants}
+              renderItem={({ item }) => <AssistantItem assistant={item} onAssistantPress={handleAssistantItemPress} />}
+              keyExtractor={item => item.id}
+              ItemSeparatorComponent={() => <YStack className="h-2" />}
+              ListEmptyComponent={
+                <YStack className="flex-1 justify-center items-center">
+                  <Text>{t('settings.assistant.empty')}</Text>
+                </YStack>
+              }
+              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 30 }}
+            />
+          </Container>
           <AssistantItemSheet
             ref={bottomSheetRef}
             assistant={selectedAssistant}

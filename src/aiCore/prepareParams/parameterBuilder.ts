@@ -67,17 +67,21 @@ export async function buildStreamTextParams(
       assistant.settings?.reasoning_effort !== undefined) ||
     (isReasoningModel(model) && (!isSupportedThinkingTokenModel(model) || !isSupportedReasoningEffortModel(model)))
 
+  // 判断是否使用内置搜索
+  // 条件：没有外部搜索提供商 && (用户开启了内置搜索 || 模型强制使用内置搜索)
   const enableWebSearch =
-    (assistant.enableWebSearch && isWebSearchModel(model)) ||
-    isOpenRouterBuiltInWebSearchModel(model) ||
-    model.id.includes('sonar') ||
-    false
+    options.webSearchProviderId === 'builtin' &&
+    ((assistant.enableWebSearch && isWebSearchModel(model)) ||
+      isOpenRouterBuiltInWebSearchModel(model) ||
+      model.id.includes('sonar'))
+
+  console.log('enableWebSearch', options, enableWebSearch)
 
   const enableUrlContext = assistant.enableUrlContext || false
 
   const enableGenerateImage = !!(isGenerateImageModel(model) && assistant.enableGenerateImage)
 
-  const tools = setupToolsConfig(mcpTools)
+  let tools = setupToolsConfig(mcpTools)
 
   // if (webSearchProviderId) {
   //   tools['builtin_web_search'] = webSearchTool(webSearchProviderId)
@@ -104,11 +108,14 @@ export async function buildStreamTextParams(
     maxRetries: 0
   }
 
+  if (tools && Object.keys(tools).length > 0) {
+    params.tools = tools
+  }
+
   if (assistant.prompt) {
     params.system = assistant.prompt
   }
 
-  logger.debug('params', params)
   return {
     params,
     modelId: model.id,

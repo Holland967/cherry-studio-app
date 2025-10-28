@@ -1,27 +1,15 @@
 import React from 'react'
-import { ActivityIndicator, StyleSheet, View } from 'react-native'
-
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
-import { useAssistant } from '@/hooks/useAssistant'
-import { Topic } from '@/types/assistant'
+import { StyleSheet, View } from 'react-native'
 
 import Messages from './messages/Messages'
+import { Assistant, Topic } from '@/types/assistant'
 
 interface ChatContentProps {
   topic: Topic
+  assistant: Assistant
 }
 
-const ChatContent = ({ topic }: ChatContentProps) => {
-  const { assistant, isLoading } = useAssistant(topic.assistantId)
-
-  if (isLoading || !assistant) {
-    return (
-      <SafeAreaContainer style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator />
-      </SafeAreaContainer>
-    )
-  }
-
+const ChatContent = ({ topic, assistant }: ChatContentProps) => {
   return (
     <View style={styles.container}>
       <Messages assistant={assistant} topic={topic} />

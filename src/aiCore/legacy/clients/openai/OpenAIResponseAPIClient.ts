@@ -1,4 +1,4 @@
-import { File, Paths } from 'expo-file-system/next'
+import { File, Paths } from 'expo-file-system'
 import { t } from 'i18next'
 import { isEmpty } from 'lodash'
 import OpenAI, { AzureOpenAI } from 'openai'
@@ -163,7 +163,7 @@ export class OpenAIResponseAPIClient extends OpenAIBaseClient<
     //   return undefined
     // }
 
-    const data = new File(file.path).base64()
+    const data = await new File(file.path).base64()
     return {
       type: 'input_file',
       filename: file.origin_name,
@@ -206,7 +206,7 @@ export class OpenAIResponseAPIClient extends OpenAIBaseClient<
         parts.push({
           detail: 'auto',
           type: 'input_image',
-          image_url: image.base64()
+          image_url: await image.base64()
         })
       }
     }
@@ -244,7 +244,7 @@ export class OpenAIResponseAPIClient extends OpenAIBaseClient<
       }
 
       if ([FileTypes.TEXT, FileTypes.DOCUMENT].includes(file.type)) {
-        const fileContent = new File(file.path).text().trim()
+        const fileContent = new File(file.path).textSync().trim()
         parts.push({
           type: 'input_text',
           text: file.origin_name + '\n' + fileContent

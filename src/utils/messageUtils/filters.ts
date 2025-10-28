@@ -5,7 +5,8 @@ import { isEmpty, remove, takeRight } from 'lodash'
 
 import { type GroupedMessage, MainTextMessageBlock, type Message, MessageBlockType } from '@/types/message' // Assuming correct Message type import
 
-import { getBlockById } from '../../../db/queries/messageBlocks.queries'
+import { messageBlockDatabase } from '@database'
+const { getBlockById } = messageBlockDatabase
 // Assuming getGroupedMessages is also moved here or imported
 // import { getGroupedMessages } from './path/to/getGroupedMessages';
 

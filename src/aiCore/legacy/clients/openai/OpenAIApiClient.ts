@@ -1,4 +1,4 @@
-import { File, Paths } from 'expo-file-system/next'
+import { File, Paths } from 'expo-file-system'
 import { t } from 'i18next'
 import OpenAI, { AzureOpenAI } from 'openai'
 import { ChatCompletionContentPart, ChatCompletionContentPartRefusal, ChatCompletionTool } from 'openai/resources'
@@ -418,7 +418,7 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
     if (imageContents.length > 0) {
       for (const imageContent of imageContents) {
         const image = new File(Paths.join(Paths.cache, 'Files', imageContent.fileId + imageContent.fileExt))
-        parts.push({ type: 'image_url', image_url: { url: image.base64() } })
+        parts.push({ type: 'image_url', image_url: { url: await image.base64() } })
       }
     }
 
@@ -426,7 +426,7 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
       if (isVision) {
         if (imageBlock.file) {
           const image = new File(imageBlock.file.path)
-          parts.push({ type: 'image_url', image_url: { url: image.base64() } })
+          parts.push({ type: 'image_url', image_url: { url: await image.base64() } })
         } else if (imageBlock.url && imageBlock.url.startsWith('data:')) {
           parts.push({ type: 'image_url', image_url: { url: imageBlock.url } })
         }
@@ -441,7 +441,7 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
       }
 
       if ([FileTypes.TEXT, FileTypes.DOCUMENT].includes(file.type)) {
-        const fileContent = new File(file.path).text().trim()
+        const fileContent = new File(file.path).textSync().trim()
         parts.push({
           type: 'text',
           text: file.origin_name + '\n' + fileContent

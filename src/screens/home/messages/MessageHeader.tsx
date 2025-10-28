@@ -1,28 +1,39 @@
 import React from 'react'
-import { Text, View, XStack } from 'tamagui'
+import { useTranslation } from 'react-i18next'
+import { View } from 'react-native'
 
-import { Assistant } from '@/types/assistant'
+import { ModelIcon } from '@/componentsV2/icons'
+import { Text, XStack } from '@/componentsV2'
 import { Message } from '@/types/message'
+import { storage } from '@/utils'
+import { getBaseModelName } from '@/utils/naming'
 
 interface MessageHeaderProps {
   message: Message
-  assistant: Assistant
 }
 
-const MessageHeader: React.FC<MessageHeaderProps> = ({ message, assistant }) => {
+const MessageHeader: React.FC<MessageHeaderProps> = ({ message }) => {
+  const { t } = useTranslation()
+  const currentLanguage = storage.getString('language')
   return (
-    <View>
-      <XStack gap={10} alignItems="center">
-        <Text height={24} width={24} textAlign="center" lineHeight={24}>
-          {assistant.emoji}
-        </Text>
-        <Text fontSize={14} fontWeight="bold">
-          {assistant.name}
-        </Text>
-        <Text fontSize={10}>
-          {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-        </Text>
-      </XStack>
+    <View className="px-4">
+      {message.model && (
+        <XStack className="gap-2 items-center">
+          <ModelIcon model={message.model} />
+          <Text className="text-base">{getBaseModelName(message.model?.name)}</Text>
+          <Text>|</Text>
+          <Text className="text-base text-text-secondary dark:text-text-secondary-dark">
+            {t(`provider.${message.model?.provider}`)}
+          </Text>
+          <Text className="text-xs text-text-secondary dark:text-text-secondary-dark">
+            {new Date(message.createdAt).toLocaleTimeString(currentLanguage, {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            })}
+          </Text>
+        </XStack>
+      )}
     </View>
   )
 }

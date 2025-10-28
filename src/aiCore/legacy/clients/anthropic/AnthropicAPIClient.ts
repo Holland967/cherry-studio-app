@@ -23,7 +23,7 @@ import {
   WebSearchToolResultError
 } from '@anthropic-ai/sdk/resources/messages'
 import { MessageStream } from '@anthropic-ai/sdk/resources/messages/messages'
-import { File, Paths } from 'expo-file-system/next'
+import { File, Paths } from 'expo-file-system'
 import { t } from 'i18next'
 
 import { findTokenLimit, isClaudeReasoningModel, isReasoningModel, isWebSearchModel } from '@/config/models'
@@ -173,7 +173,7 @@ export class AnthropicAPIClient extends BaseApiClient<
   }
 
   // @ts-ignore sdk未提供
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   override async generateImage(generateImageParams: GenerateImageParams): Promise<string[]> {
     return []
   }
@@ -289,7 +289,7 @@ export class AnthropicAPIClient extends BaseApiClient<
           parts.push({
             type: 'image',
             source: {
-              data: image.base64(),
+              data: await image.base64(),
               media_type: image.type,
               type: 'base64'
             }
@@ -310,7 +310,7 @@ export class AnthropicAPIClient extends BaseApiClient<
         parts.push({
           type: 'image',
           source: {
-            data: image.base64(),
+            data: await image.base64(),
             media_type: image.type?.replace('jpg', 'jpeg') as any,
             type: 'base64'
           }
@@ -326,7 +326,7 @@ export class AnthropicAPIClient extends BaseApiClient<
 
       if ([FileTypes.TEXT, FileTypes.DOCUMENT].includes(file.type)) {
         if (file.ext === '.pdf' && file.size < 32 * 1024 * 1024) {
-          const base64Data = new File(file.path).base64()
+          const base64Data = await new File(file.path).base64()
           parts.push({
             type: 'document',
             source: {
@@ -336,7 +336,7 @@ export class AnthropicAPIClient extends BaseApiClient<
             }
           })
         } else {
-          const fileContent = new File(file.path).text().trim()
+          const fileContent = new File(file.path).textSync().trim()
           parts.push({
             type: 'text',
             text: file.origin_name + '\n' + fileContent

@@ -1,17 +1,23 @@
 import { RouteProp, useRoute } from '@react-navigation/native'
-import { FlashList, ListRenderItemInfo } from '@shopify/flash-list'
-import { Minus, Plus } from '@tamagui/lucide-icons'
+import { ImpactFeedbackStyle } from 'expo-haptics'
 import { groupBy, isEmpty, uniqBy } from 'lodash'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActivityIndicator } from 'react-native'
-import { Accordion, Button, ScrollView, Tabs, Text, YStack } from 'tamagui'
+import { ActivityIndicator, ScrollView } from 'react-native'
 
-import { SettingContainer, SettingGroup } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import { ModelGroup } from '@/components/settings/providers/ModelGroup'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
-import { SearchInput } from '@/components/ui/SearchInput'
+import {
+  Container,
+  Group,
+  HeaderBar,
+  ModelGroup,
+  SafeAreaContainer,
+  Text,
+  XStack,
+  YStack,
+  IconButton,
+  SearchInput
+} from '@/componentsV2'
+import { Minus, Plus } from '@/componentsV2/icons/LucideIcon'
 import {
   groupQwenModels,
   isEmbeddingModel,
@@ -28,7 +34,11 @@ import { fetchModels } from '@/services/ApiService'
 import { loggerService } from '@/services/LoggerService'
 import { getProviderById, saveProvider } from '@/services/ProviderService'
 import { Model, Provider } from '@/types/assistant'
+import { haptic } from '@/utils/haptic'
 import { getDefaultGroupName } from '@/utils/naming'
+import { ModelIcon } from '@/componentsV2/icons'
+import { ModelTags } from '@/componentsV2/features/ModelTags'
+import { Tabs } from 'tamagui'
 const logger = loggerService.withContext('ManageModelsScreen')
 
 type ProviderSettingsRouteProp = RouteProp<ProvidersStackParamList, 'ManageModelsScreen'>
@@ -129,7 +139,7 @@ export default function ManageModelsScreen() {
   } = useSearch(
     allModels,
     useCallback((model: Model) => [model.id, model.name || ''], []),
-    { delay: 300 }
+    { delay: 100 }
   )
 
   const filteredModels = filterModels(searchFilteredModels, '', activeFilterType)
@@ -143,18 +153,22 @@ export default function ManageModelsScreen() {
   }
 
   const onAddModel = async (model: Model) => {
+    haptic(ImpactFeedbackStyle.Medium)
     await handleUpdateModels(uniqBy([...(provider?.models || []), model], 'id'))
   }
 
   const onRemoveModel = async (model: Model) => {
+    haptic(ImpactFeedbackStyle.Medium)
     await handleUpdateModels((provider?.models || []).filter(m => m.id !== model.id))
   }
 
   const onAddAllModels = async (modelsToAdd: Model[]) => {
+    haptic(ImpactFeedbackStyle.Medium)
     await handleUpdateModels(uniqBy([...(provider?.models || []), ...modelsToAdd], 'id'))
   }
 
   const onRemoveAllModels = async (modelsToRemove: Model[]) => {
+    haptic(ImpactFeedbackStyle.Medium)
     const modelsToRemoveIds = new Set(modelsToRemove.map(m => m.id))
     await handleUpdateModels((provider?.models || []).filter(m => !modelsToRemoveIds.has(m.id)))
   }
@@ -182,49 +196,6 @@ export default function ManageModelsScreen() {
     fetchAndSetModels()
   }, [providerId])
 
-  const renderModelGroupItem = ({ item: [groupName, currentModels], index }: ListRenderItemInfo<[string, Model[]]>) => (
-    <ModelGroup
-      groupName={groupName}
-      models={currentModels}
-      index={index}
-      showModelCount={true}
-      renderGroupButton={groupButtonModels => (
-        <Button
-          size={20}
-          chromeless
-          circular
-          icon={
-            isAllModelsInCurrentProvider(groupButtonModels) ? (
-              <Minus size={20} borderRadius={99} backgroundColor="$red20" color="$red100" />
-            ) : (
-              <Plus size={20} borderRadius={99} backgroundColor="$green20" color="$green100" />
-            )
-          }
-          onPress={
-            isAllModelsInCurrentProvider(groupButtonModels)
-              ? () => onRemoveAllModels(groupButtonModels)
-              : () => onAddAllModels(groupButtonModels)
-          }
-        />
-      )}
-      renderModelButton={model => (
-        <Button
-          size={16}
-          chromeless
-          circular
-          icon={
-            isModelInCurrentProvider(model.id) ? (
-              <Minus size={16} borderRadius={99} backgroundColor="$red20" color="$red100" />
-            ) : (
-              <Plus size={16} borderRadius={99} backgroundColor="$green20" color="$green100" />
-            )
-          }
-          onPress={isModelInCurrentProvider(model.id) ? () => onRemoveModel(model) : () => onAddModel(model)}
-        />
-      )}
-    />
-  )
-
   const getTabStyle = (isActive: boolean) => ({
     height: '100%',
     backgroundColor: isActive ? '$background' : 'transparent',
@@ -232,20 +203,14 @@ export default function ManageModelsScreen() {
   })
 
   return (
-    <SafeAreaContainer
-      style={{
-        flex: 1
-      }}>
-      <HeaderBar title={provider?.name || t('settings.models.manage_models')} />
+    <SafeAreaContainer className="flex-1">
+      {provider && <HeaderBar title={t(`provider.${provider.id}`, { defaultValue: provider.name })} />}
       {isLoading ? (
         <SafeAreaContainer style={{ alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator />
         </SafeAreaContainer>
       ) : (
-        <SettingContainer
-          paddingBottom={0}
-          onStartShouldSetResponder={() => false}
-          onMoveShouldSetResponder={() => false}>
+        <Container className="pb-0" onStartShouldSetResponder={() => false} onMoveShouldSetResponder={() => false}>
           {/* Filter Tabs */}
           <Tabs
             defaultValue="all"
@@ -267,30 +232,65 @@ export default function ManageModelsScreen() {
 
           <SearchInput placeholder={t('settings.models.search')} value={searchText} onChangeText={setSearchText} />
 
-          <YStack flex={1} height="100%">
-            <SettingGroup flex={1}>
-              {sortedModelGroups.length > 0 ? (
-                <Accordion overflow="hidden" type="multiple" flex={1}>
-                  <FlashList
-                    data={sortedModelGroups}
-                    renderItem={renderModelGroupItem}
-                    keyExtractor={([groupName]) => groupName}
-                    estimatedItemSize={60}
-                    showsVerticalScrollIndicator={false}
-                    extraData={provider}
-                    contentContainerStyle={{ paddingBottom: 24 }}
+          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            <Group className="flex-1">
+              <ModelGroup
+                modelGroups={sortedModelGroups}
+                renderModelItem={(model, index) => (
+                  <XStack className="items-center justify-between w-full">
+                    <XStack className="flex-1 gap-2">
+                      <XStack className="items-center justify-center">
+                        <ModelIcon model={model} />
+                      </XStack>
+                      <YStack className="flex-1 gap-1">
+                        <Text numberOfLines={1} ellipsizeMode="tail">
+                          {model.name}
+                        </Text>
+                        <ModelTags model={model} size={11} />
+                      </YStack>
+                    </XStack>
+                    <XStack>
+                      <IconButton
+                        icon={
+                          isModelInCurrentProvider(model.id) ? (
+                            <Minus size={18} className="rounded-full bg-red-20 text-red-100 dark:text-red-100" />
+                          ) : (
+                            <Plus
+                              size={18}
+                              className="rounded-full bg-green-20 text-green-100 dark:bg-green-dark-20 dark:text-green-dark-100"
+                            />
+                          )
+                        }
+                        onPress={
+                          isModelInCurrentProvider(model.id) ? () => onRemoveModel(model) : () => onAddModel(model)
+                        }
+                      />
+                    </XStack>
+                  </XStack>
+                )}
+                renderGroupButton={(groupName, models) => (
+                  <IconButton
+                    icon={
+                      isAllModelsInCurrentProvider(models) ? (
+                        <Minus size={18} className="rounded-full bg-red-20 text-red-100 dark:text-red-100" />
+                      ) : (
+                        <Plus
+                          size={18}
+                          className="rounded-full bg-green-20 text-green-100 dark:bg-green-dark-20 dark:text-green-dark-100"
+                        />
+                      )
+                    }
+                    onPress={
+                      isAllModelsInCurrentProvider(models)
+                        ? () => onRemoveAllModels(models)
+                        : () => onAddAllModels(models)
+                    }
                   />
-                </Accordion>
-              ) : (
-                <YStack flex={1} justifyContent="center" alignItems="center">
-                  <Text textAlign="center" color="$gray10">
-                    {t('models.no_models')}
-                  </Text>
-                </YStack>
-              )}
-            </SettingGroup>
-          </YStack>
-        </SettingContainer>
+                )}
+              />
+            </Group>
+          </ScrollView>
+        </Container>
       )}
     </SafeAreaContainer>
   )

@@ -1,17 +1,23 @@
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { RouteProp, useRoute } from '@react-navigation/native'
-import { Eye, EyeOff, ShieldCheck } from '@tamagui/lucide-icons'
 import { ImpactFeedbackStyle } from 'expo-haptics'
 import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator } from 'react-native'
-import { Button, Input, Stack, Text, XStack, YStack } from 'tamagui'
+import { Button } from 'heroui-native'
 
-import ExternalLink from '@/components/ExternalLink'
-import { SettingContainer, SettingGroupTitle, SettingHelpText } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import { ApiCheckSheet } from '@/components/settings/websearch/ApiCheckSheet'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
+import {
+  Container,
+  GroupTitle,
+  HeaderBar,
+  SafeAreaContainer,
+  Text,
+  TextField,
+  XStack,
+  YStack,
+  ExternalLink
+} from '@/componentsV2'
+import { Eye, EyeOff, ShieldCheck } from '@/componentsV2/icons/LucideIcon'
 import { WEB_SEARCH_PROVIDER_CONFIG } from '@/config/websearchProviders'
 import { useDialog } from '@/hooks/useDialog'
 import { useWebSearchProvider } from '@/hooks/useWebsearchProviders'
@@ -19,6 +25,7 @@ import { WebSearchStackParamList } from '@/navigators/settings/WebSearchStackNav
 import WebSearchService from '@/services/WebSearchService'
 import { ApiStatus } from '@/types/assistant'
 import { haptic } from '@/utils/haptic'
+import { WebSearchApiCheckSheet } from '@/componentsV2/features/SettingsScreen/WebSearchApiCheckSheet'
 
 type WebsearchProviderSettingsRouteProp = RouteProp<WebSearchStackParamList, 'WebSearchProviderSettingsScreen'>
 
@@ -39,7 +46,7 @@ export default function WebSearchProviderSettingsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaContainer style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <SafeAreaContainer className="flex-1 items-center justify-center">
         <ActivityIndicator />
       </SafeAreaContainer>
     )
@@ -49,11 +56,9 @@ export default function WebSearchProviderSettingsScreen() {
     return (
       <SafeAreaContainer>
         <HeaderBar title={t('settings.provider.not_found')} />
-        <SettingContainer>
-          <Text textAlign="center" color="$gray10" paddingVertical={24}>
-            {t('settings.provider.not_found_message')}
-          </Text>
-        </SettingContainer>
+        <Container>
+          <Text className="text-center text-gray-400 py-6">{t('settings.provider.not_found_message')}</Text>
+        </Container>
       </SafeAreaContainer>
     )
   }
@@ -115,76 +120,63 @@ export default function WebSearchProviderSettingsScreen() {
   }
 
   return (
-    <SafeAreaContainer style={{ flex: 1 }}>
+    <SafeAreaContainer className="flex-1">
       <HeaderBar title={provider.name} />
-      <SettingContainer>
+      <Container>
         {/* API Key 配置 */}
         {provider.type === 'api' && (
-          <YStack gap={8}>
-            <XStack paddingHorizontal={10} height={20} justifyContent="space-between" alignItems="center">
-              <SettingGroupTitle>{t('settings.websearch.api_key')}</SettingGroupTitle>
-              <Button
-                size={16}
-                icon={<ShieldCheck size={16} color="$textLink" />}
-                backgroundColor="$colorTransparent"
-                circular
-                onPress={handleOpenBottomSheet}
-              />
+          <YStack className="gap-2">
+            <XStack className="justify-between items-center">
+              <GroupTitle>{t('settings.websearch.api_key.label')}</GroupTitle>
+              <Button size="sm" isIconOnly variant="ghost" onPress={handleOpenBottomSheet}>
+                <Button.Label>
+                  <ShieldCheck size={16} className="text-blue-500" />
+                </Button.Label>
+              </Button>
             </XStack>
 
-            <XStack paddingVertical={8} gap={8} position="relative">
-              <Input
-                paddingVertical={0}
-                flex={1}
-                placeholder={t('settings.websearch.api_key.placeholder')}
-                secureTextEntry={!showApiKey}
-                paddingRight={48}
-                value={provider?.apiKey || ''}
-                onChangeText={text => handleProviderConfigChange('apiKey', text)}
-                fontSize={14}
-                multiline={false}
-                numberOfLines={1}
-              />
-              <Stack
-                position="absolute"
-                right={10}
-                top="50%"
-                height={16}
-                width={16}
-                alignItems="center"
-                justifyContent="center"
-                zIndex={1}
-                onPress={toggleApiKeyVisibility}
-                cursor="pointer">
-                {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-              </Stack>
+            <XStack className="gap-2 relative">
+              <TextField className="flex-1">
+                <TextField.Input
+                  className="h-12 pr-0"
+                  value={provider?.apiKey || ''}
+                  secureTextEntry={!showApiKey}
+                  placeholder={t('settings.websearch.api_key.placeholder')}
+                  onChangeText={text => handleProviderConfigChange('apiKey', text)}>
+                  <TextField.InputEndContent>
+                    <Button size="sm" variant="ghost" isIconOnly onPress={toggleApiKeyVisibility}>
+                      <Button.Label>
+                        {showApiKey ? <EyeOff className="text-white" size={16} /> : <Eye size={16} />}
+                      </Button.Label>
+                    </Button>
+                  </TextField.InputEndContent>
+                </TextField.Input>
+              </TextField>
             </XStack>
 
-            <XStack justifyContent="space-between">
-              <SettingHelpText>{t('settings.provider.api_key.tip')}</SettingHelpText>
-              <ExternalLink href={apiKeyWebsite} size={12}>
-                {t('settings.websearch.api_key.get')}
-              </ExternalLink>
+            <XStack className="justify-between px-3">
+              <Text className="text-xs opacity-40">{t('settings.provider.api_key.tip')}</Text>
+              <ExternalLink href={apiKeyWebsite} content={t('settings.websearch.api_key.get')} />
             </XStack>
           </YStack>
         )}
 
         {/* API Host 配置 */}
-        <YStack gap={8}>
-          <XStack paddingHorizontal={10} height={20} alignItems="center">
-            <SettingGroupTitle>{t('settings.websearch.api_host')}</SettingGroupTitle>
+        <YStack className="gap-2">
+          <XStack className="pr-3 justify-between items-center">
+            <GroupTitle>{t('settings.websearch.api_host.label')}</GroupTitle>
           </XStack>
-          <Input
-            paddingVertical={0}
-            placeholder={t('settings.websearch.api_host.placeholder')}
-            value={provider?.apiHost || ''}
-            onChangeText={text => handleProviderConfigChange('apiHost', text)}
-            multiline={false}
-            numberOfLines={1}
-          />
+          <TextField>
+            <TextField.Input
+              className="h-12"
+              placeholder={t('settings.websearch.api_host.placeholder')}
+              value={provider?.apiHost || ''}
+              onChangeText={text => handleProviderConfigChange('apiHost', text)}
+            />
+          </TextField>
         </YStack>
-      </SettingContainer>
-      <ApiCheckSheet ref={bottomSheetRef} onStartModelCheck={checkSearch} checkApiStatus={checkApiStatus} />
+      </Container>
+      <WebSearchApiCheckSheet ref={bottomSheetRef} onStartModelCheck={checkSearch} checkApiStatus={checkApiStatus} />
     </SafeAreaContainer>
   )
 }

@@ -12,6 +12,7 @@ Cherry Studio 采用层次化的导航结构，基于 React Navigation v7 构建
 ## 导航层级结构
 
 ### 第一层：根导航（MainStackNavigator）
+
 **文件位置**：`src/navigators/MainStackNavigator.tsx`
 
 根导航负责应用的初始化流程，根据用户状态决定显示欢迎页面还是主界面：
@@ -23,11 +24,13 @@ MainStackNavigator
 ```
 
 **特点**：
+
 - 根据 Redux 状态 `app.welcomeShown` 决定是否显示欢迎页面
 - 无动画过渡效果（`animation: 'none'`）
 - 隐藏头部导航栏
 
 ### 第二层：主抽屉导航（AppDrawerNavigator）
+
 **文件位置**：`src/navigators/AppDrawerNavigator.tsx`
 
 主抽屉导航是应用的核心导航容器，提供侧边栏菜单访问各个功能模块：
@@ -40,6 +43,7 @@ AppDrawerNavigator
 ```
 
 **配置特点**：
+
 - 自定义抽屉内容：`CustomDrawerContent`
 - 抽屉宽度：屏幕宽度的 80%
 - 抽屉类型：滑动式（`slide`）
@@ -48,6 +52,7 @@ AppDrawerNavigator
 ### 第三层：功能模块导航
 
 #### 3.1 主页导航（HomeStackNavigator）
+
 **文件位置**：`src/navigators/HomeStackNavigator.tsx`
 
 处理聊天相关的页面导航：
@@ -60,6 +65,7 @@ HomeStackNavigator
 ```
 
 #### 3.2 助手导航（AssistantStackNavigator）
+
 **文件位置**：`src/navigators/AssistantStackNavigator.tsx`
 
 管理 AI 助手相关功能：
@@ -72,6 +78,7 @@ AssistantStackNavigator
 ```
 
 #### 3.3 设置导航（SettingsStackNavigator）
+
 **文件位置**：`src/navigators/SettingsStackNavigator.tsx`
 
 应用设置的总入口，连接各个设置子模块：
@@ -90,6 +97,7 @@ SettingsStackNavigator
 ### 第四层：设置子导航
 
 #### 4.1 通用设置导航（GeneralSettingsStackNavigator）
+
 **文件位置**：`src/navigators/settings/GeneralSettingsStackNavigator.tsx`
 
 ```
@@ -100,6 +108,7 @@ GeneralSettingsStackNavigator
 ```
 
 #### 4.2 提供商设置导航（ProvidersStackNavigator）
+
 **文件位置**：`src/navigators/settings/ProvidersStackNavigator.tsx`
 
 管理 AI 服务提供商的复杂配置流程：
@@ -114,6 +123,7 @@ ProvidersStackNavigator
 ```
 
 #### 4.3 其他设置子导航
+
 - **AssistantSettingsStackNavigator**：助手相关设置
 - **DataSourcesStackNavigator**：数据源管理
 - **WebSearchStackNavigator**：网页搜索配置
@@ -122,30 +132,36 @@ ProvidersStackNavigator
 ## 导航设计原则
 
 ### 1. 层次化设计
+
 - **清晰的功能分层**：每个导航器负责特定的功能域
 - **递进式结构**：从通用到具体，逐级细化
 - **模块化组织**：各功能模块相对独立，便于维护
 
 ### 2. 用户体验优化
+
 - **统一的过渡动画**：所有 Stack 导航器都使用 iOS 风格的右滑过渡
 - **隐藏原生头部**：使用自定义头部组件，保证视觉一致性
 - **手势导航支持**：抽屉导航支持手势滑动（设置页面除外）
 
 ### 3. 类型安全
+
 - **强类型参数定义**：每个导航器都定义了 TypeScript 参数类型
 - **导航属性类型导出**：提供 `NavigationProp` 类型用于组件中的导航操作
 
 ### 4. 兼容性考虑
+
 - **向后兼容**：在抽屉导航中保留了直接的 `ChatScreen` 和 `TopicScreen` 入口
 - **渐进式重构**：新的层次化结构与旧的直接导航并存
 
 ## 导航状态管理
 
 ### Redux 集成
+
 - **欢迎页面控制**：通过 `app.welcomeShown` 状态控制首次启动流程
 - **导航状态持久化**：React Navigation 自动处理导航状态的持久化
 
 ### 参数传递
+
 各导航器支持类型安全的参数传递：
 
 - `ChatScreen`: `{ topicId: string }` - 指定要打开的对话 ID
@@ -156,15 +172,15 @@ ProvidersStackNavigator
 
 ## 关键文件说明
 
-| 文件路径 | 作用 | 包含屏幕 |
-|---------|------|---------|
-| `MainStackNavigator.tsx` | 应用根导航 | WelcomeScreen, HomeScreen |
-| `AppDrawerNavigator.tsx` | 主抽屉导航 | 连接各功能模块 |
-| `HomeStackNavigator.tsx` | 主页功能导航 | ChatScreen, TopicScreen, AssistantDetailScreen |
-| `AssistantStackNavigator.tsx` | 助手功能导航 | AssistantScreen, AssistantMarketScreen |
-| `SettingsStackNavigator.tsx` | 设置总导航 | 连接各设置子模块 |
-| `settings/GeneralSettingsStackNavigator.tsx` | 通用设置 | 主题、语言设置 |
-| `settings/ProvidersStackNavigator.tsx` | 提供商设置 | API 配置、模型管理 |
+| 文件路径                                     | 作用         | 包含屏幕                                       |
+| -------------------------------------------- | ------------ | ---------------------------------------------- |
+| `MainStackNavigator.tsx`                     | 应用根导航   | WelcomeScreen, HomeScreen                      |
+| `AppDrawerNavigator.tsx`                     | 主抽屉导航   | 连接各功能模块                                 |
+| `HomeStackNavigator.tsx`                     | 主页功能导航 | ChatScreen, TopicScreen, AssistantDetailScreen |
+| `AssistantStackNavigator.tsx`                | 助手功能导航 | AssistantScreen, AssistantMarketScreen         |
+| `SettingsStackNavigator.tsx`                 | 设置总导航   | 连接各设置子模块                               |
+| `settings/GeneralSettingsStackNavigator.tsx` | 通用设置     | 主题、语言设置                                 |
+| `settings/ProvidersStackNavigator.tsx`       | 提供商设置   | API 配置、模型管理                             |
 
 ## 导航最佳实践
 

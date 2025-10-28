@@ -37,8 +37,8 @@ export interface BaseMessageBlock {
   id: string // 块ID
   messageId: string // 所属消息ID
   type: MessageBlockType // 块类型
-  createdAt: string // 创建时间
-  updatedAt?: string // 更新时间
+  createdAt: number // 创建时间
+  updatedAt?: number // 更新时间
   status: MessageBlockStatus // 块状态
   model?: Model // 使用的模型
   metadata?: Record<string, any> // 通用元数据
@@ -153,8 +153,8 @@ export type Message = {
   role: 'user' | 'assistant' | 'system'
   assistantId: string
   topicId: string
-  createdAt: string
-  updatedAt?: string
+  createdAt: number
+  updatedAt?: number
   status: UserMessageStatus | AssistantMessageStatus
 
   // 消息元数据

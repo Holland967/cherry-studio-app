@@ -1,11 +1,9 @@
 import { useNavigation } from '@react-navigation/native'
-import { File, Paths } from 'expo-file-system/next'
-import React, { useEffect, useRef, useState } from 'react' // Import useRef
+import { File, Paths } from 'expo-file-system'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { RestoreProgressModal } from '@/components/settings/data/RestoreProgressModal'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
+import { SafeAreaContainer, HeaderBar, RestoreProgressModal } from '@/componentsV2'
 import { useDialog } from '@/hooks/useDialog'
 import { useRestore } from '@/hooks/useRestore'
 import { useWebSocket, WebSocketStatus } from '@/hooks/useWebSocket'

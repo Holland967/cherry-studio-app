@@ -1,148 +1,20 @@
-import { eq } from 'drizzle-orm'
+import { eq, sql, count } from 'drizzle-orm'
 
 import { loggerService } from '@/services/LoggerService'
 import { Message } from '@/types/message'
-import { safeJsonParse } from '@/utils/json'
 
 import { db } from '..'
+import { transformDbToMessage, transformMessageToDb } from '../mappers'
 import { messages } from '../schema'
-import { getBlocksIdByMessageId } from './messageBlocks.queries'
+
 const logger = loggerService.withContext('DataBase Messages')
 
 /**
- * 将数据库记录转换为 Message 类型。
- * @param dbRecord - 从数据库检索的记录。
- * @returns 一个 Message 对象。
- */
-export function transformDbToMessage(dbRecord: any): Message {
-  return {
-    id: dbRecord.id,
-    role: dbRecord.role,
-    assistantId: dbRecord.assistant_id,
-    topicId: dbRecord.topic_id,
-    createdAt: dbRecord.created_at,
-    updatedAt: dbRecord.updated_at,
-    status: dbRecord.status,
-    modelId: dbRecord.model_id,
-    model: dbRecord.model ? safeJsonParse(dbRecord.model) : undefined,
-    type: dbRecord.type,
-    useful: !!dbRecord.useful,
-    askId: dbRecord.ask_id,
-    mentions: dbRecord.mentions ? safeJsonParse(dbRecord.mentions) : undefined,
-    usage: dbRecord.usage ? safeJsonParse(dbRecord.usage) : undefined,
-    metrics: dbRecord.metrics ? safeJsonParse(dbRecord.metrics) : undefined,
-    multiModelMessageStyle: dbRecord.multi_model_message_style,
-    foldSelected: !!dbRecord.fold_selected,
-    // 注意：'blocks' 字段需要通过查询 message_blocks 表来单独填充。
-    blocks: []
-  }
-}
-
-/**
- * 将 Message 对象转换为数据库记录格式。
- * 注意：此函数不处理 'blocks' 属性，因为块存储在单独的表中。
- * @param message - Message 对象。
- * @returns 一个适合数据库操作的对象。
- */
-function transformMessageToDb(message: Partial<Message>): any {
-  const dbRecord: any = {}
-
-  if (message.id !== undefined) dbRecord.id = message.id
-  if (message.role !== undefined) dbRecord.role = message.role
-  if (message.assistantId !== undefined) dbRecord.assistant_id = message.assistantId
-  if (message.topicId !== undefined) dbRecord.topic_id = message.topicId
-  if (message.createdAt !== undefined) dbRecord.created_at = message.createdAt
-  if (message.updatedAt !== undefined) dbRecord.updated_at = message.updatedAt
-  if (message.status !== undefined) dbRecord.status = message.status
-  if (message.modelId !== undefined) dbRecord.model_id = message.modelId
-  if (message.type !== undefined) dbRecord.type = message.type
-  if (message.askId !== undefined) dbRecord.ask_id = message.askId
-  if (message.multiModelMessageStyle !== undefined) dbRecord.multi_model_message_style = message.multiModelMessageStyle
-
-  if (message.useful !== undefined) {
-    dbRecord.useful = message.useful ? 1 : 0
-  }
-
-  if (message.foldSelected !== undefined) {
-    dbRecord.fold_selected = message.foldSelected ? 1 : 0
-  }
-
-  if (message.model !== undefined) {
-    dbRecord.model = message.model ? JSON.stringify(message.model) : null
-  }
-
-  if (message.mentions !== undefined) {
-    dbRecord.mentions = message.mentions ? JSON.stringify(message.mentions) : null
-  }
-
-  if (message.usage !== undefined) {
-    dbRecord.usage = message.usage ? JSON.stringify(message.usage) : null
-  }
-
-  if (message.metrics !== undefined) {
-    dbRecord.metrics = message.metrics ? JSON.stringify(message.metrics) : null
-  }
-
-  return dbRecord
-}
-
-/**
- * 根据 ID 获取单个消息。
- * @param messageId - 要获取的消息的 ID。
- * @returns 一个 Message 对象，如果未找到则返回 undefined。
- */
-export async function getMessageById(messageId: string): Promise<Message | undefined> {
-  try {
-    const result = await db.select().from(messages).where(eq(messages.id, messageId)).limit(1)
-
-    if (result.length === 0) {
-      return undefined
-    }
-
-    const blocks = await getBlocksIdByMessageId(messageId)
-    const message = transformDbToMessage(result[0])
-    message.blocks = blocks
-    return message
-  } catch (error) {
-    logger.error(`Error getting message by ID ${messageId}:`, error)
-    throw error
-  }
-}
-
-/**
- * 获取给定主题 ID 的所有消息。
- * @param topicId - 主题的 ID。
- * @returns 一组 Message 对象。
- */
-export async function getMessagesByTopicId(topicId: string): Promise<Message[]> {
-  try {
-    const results = await db.select().from(messages).where(eq(messages.topic_id, topicId))
-
-    if (results.length === 0) {
-      return []
-    }
-
-    const messagesResult = results.map(transformDbToMessage)
-    // 获取所有消息的块 ID
-    const blocksPromises = messagesResult.map(message => getBlocksIdByMessageId(message.id))
-    const blocksResults = await Promise.all(blocksPromises)
-
-    // 将每个消息的块 ID 填充到对应的消息对象中
-    for (let i = 0; i < messagesResult.length; i++) {
-      messagesResult[i].blocks = blocksResults[i]
-    }
-
-    return messagesResult
-  } catch (error) {
-    logger.error(`Error getting messages for topic ID ${topicId}:`, error)
-    throw error
-  }
-}
-
-/**
- * 插入或更新一个或多个消息 (Upsert)。
- * @param messagesToUpsert - 要插入或更新的 Message 对象或对象数组。
- * @returns 包含已更新或插入的消息的数组的 Promise。
+ * 插入或更新消息记录
+ * @description 在事务中批量处理消息的 upsert 操作，支持单个或数组形式
+ * @param messagesToUpsert - 单个消息或消息数组
+ * @returns 返回插入或更新后的消息数组
+ * @throws 当数据库操作失败时抛出错误
  */
 export async function upsertMessages(messagesToUpsert: Message | Message[]): Promise<Message[]> {
   const messagesArray = Array.isArray(messagesToUpsert) ? messagesToUpsert : [messagesToUpsert]
@@ -153,7 +25,6 @@ export async function upsertMessages(messagesToUpsert: Message | Message[]): Pro
 
     const results = await db.transaction(async tx => {
       if (dbRecords.length === 1) {
-        // 单条消息优化
         const result = await tx
           .insert(messages)
           .values(dbRecords[0])
@@ -171,22 +42,22 @@ export async function upsertMessages(messagesToUpsert: Message | Message[]): Pro
         .onConflictDoUpdate({
           target: messages.id,
           set: {
-            role: messages.role,
-            assistant_id: messages.assistant_id,
-            topic_id: messages.topic_id,
-            created_at: messages.created_at,
-            updated_at: messages.updated_at,
-            status: messages.status,
-            model_id: messages.model_id,
-            model: messages.model,
-            type: messages.type,
-            useful: messages.useful,
-            ask_id: messages.ask_id,
-            mentions: messages.mentions,
-            usage: messages.usage,
-            metrics: messages.metrics,
-            multi_model_message_style: messages.multi_model_message_style,
-            fold_selected: messages.fold_selected
+            role: sql`excluded.role`,
+            assistant_id: sql`excluded.assistant_id`,
+            topic_id: sql`excluded.topic_id`,
+            created_at: sql`excluded.created_at`,
+            updated_at: sql`excluded.updated_at`,
+            status: sql`excluded.status`,
+            model_id: sql`excluded.model_id`,
+            model: sql`excluded.model`,
+            type: sql`excluded.type`,
+            useful: sql`excluded.useful`,
+            ask_id: sql`excluded.ask_id`,
+            mentions: sql`excluded.mentions`,
+            usage: sql`excluded.usage`,
+            metrics: sql`excluded.metrics`,
+            multi_model_message_style: sql`excluded.multi_model_message_style`,
+            fold_selected: sql`excluded.fold_selected`
           }
         })
         .returning()
@@ -200,6 +71,55 @@ export async function upsertMessages(messagesToUpsert: Message | Message[]): Pro
   }
 }
 
+/**
+ * 根据主题 ID 删除该主题下的所有消息
+ * @param topicId - 主题的唯一标识符
+ * @throws 当删除操作失败时抛出错误
+ */
+export async function deleteMessagesByTopicId(topicId: string): Promise<void> {
+  try {
+    await db.delete(messages).where(eq(messages.topic_id, topicId))
+  } catch (error) {
+    logger.error(`Error deleting messages for topic ID ${topicId}:`, error)
+    throw error
+  }
+}
+
+/**
+ * 根据消息 ID 删除指定消息
+ * @param messageId - 消息的唯一标识符
+ * @throws 当删除操作失败时抛出错误
+ */
+export async function deleteMessageById(messageId: string): Promise<void> {
+  try {
+    await db.delete(messages).where(eq(messages.id, messageId))
+  } catch (error) {
+    logger.error(`Error deleting message with ID ${messageId}:`, error)
+    throw error
+  }
+}
+
+/**
+ * 删除所有消息记录
+ * @description 清空消息表中的所有数据，操作不可逆
+ * @throws 当删除操作失败时抛出错误
+ */
+export async function removeAllMessages() {
+  try {
+    await db.delete(messages)
+  } catch (error) {
+    logger.error('Error removing all messages:', error)
+    throw error
+  }
+}
+
+/**
+ * 根据消息 ID 更新消息的部分字段
+ * @param messageId - 消息的唯一标识符
+ * @param updates - 需要更新的字段（部分更新）
+ * @returns 如果更新成功则返回更新后的消息对象，否则返回 undefined
+ * @throws 当更新操作失败时抛出错误
+ */
 export async function updateMessageById(messageId: string, updates: Partial<Message>): Promise<Message | undefined> {
   try {
     const dbRecord = transformMessageToDb(updates)
@@ -216,29 +136,102 @@ export async function updateMessageById(messageId: string, updates: Partial<Mess
   }
 }
 
-export async function deleteMessagesByTopicId(topicId: string): Promise<void> {
+/**
+ * 根据消息 ID 获取指定消息
+ * @description 使用 Drizzle 关系查询一次性获取消息及其块 ID
+ * @param messageId - 消息的唯一标识符
+ * @returns 如果找到则返回消息对象（包含块 ID 数组），否则返回 undefined
+ * @throws 当查询操作失败时抛出错误
+ */
+export async function getMessageById(messageId: string): Promise<Message | undefined> {
   try {
-    await db.delete(messages).where(eq(messages.topic_id, topicId))
+    const result = await db.query.messages.findFirst({
+      where: eq(messages.id, messageId),
+      with: {
+        blocks: {
+          columns: { id: true }
+        }
+      }
+    })
+
+    if (!result) {
+      return undefined
+    }
+
+    const message = transformDbToMessage(result)
+    message.blocks = result.blocks.map(block => block.id)
+    return message
   } catch (error) {
-    logger.error(`Error deleting messages for topic ID ${topicId}:`, error)
+    logger.error(`Error getting message by ID ${messageId}:`, error)
     throw error
   }
 }
 
-export async function deleteMessageById(messageId: string): Promise<void> {
+/**
+ * 根据主题 ID 获取该主题下的所有消息
+ * @description 使用 Drizzle 关系查询一次性获取消息及其块 ID
+ * @param topicId - 主题的唯一标识符
+ * @returns 返回该主题下的所有消息数组（每条消息包含块 ID 数组）
+ * @throws 当查询操作失败时抛出错误
+ */
+export async function getMessagesByTopicId(topicId: string): Promise<Message[]> {
   try {
-    await db.delete(messages).where(eq(messages.id, messageId))
+    const results = await db.query.messages.findMany({
+      where: eq(messages.topic_id, topicId),
+      with: {
+        blocks: {
+          columns: { id: true }
+        }
+      }
+    })
+
+    if (results.length === 0) {
+      return []
+    }
+
+    return results.map(result => {
+      const message = transformDbToMessage(result)
+      message.blocks = result.blocks.map(block => block.id)
+      return message
+    })
   } catch (error) {
-    logger.error(`Error deleting message with ID ${messageId}:`, error)
+    logger.error(`Error getting messages for topic ID ${topicId}:`, error)
     throw error
   }
 }
 
-export async function removeAllMessages() {
+export async function getHasMessagesWithTopicId(topicId: string): Promise<boolean> {
   try {
-    await db.delete(messages)
+    const result = await db.select({ count: count() }).from(messages).where(eq(messages.topic_id, topicId))
+
+    return result[0].count > 0
   } catch (error) {
-    logger.error('Error removing all messages:', error)
+    logger.error(`Error checking if topic ID ${topicId} has messages:`, error)
+    throw error
+  }
+}
+
+export async function getAllMessages(): Promise<Message[]> {
+  try {
+    const results = await db.query.messages.findMany({
+      with: {
+        blocks: {
+          columns: { id: true }
+        }
+      }
+    })
+
+    if (results.length === 0) {
+      return []
+    }
+
+    return results.map(result => {
+      const message = transformDbToMessage(result)
+      message.blocks = result.blocks.map(block => block.id)
+      return message
+    })
+  } catch (error) {
+    logger.error(`Error getting all messages:`, error)
     throw error
   }
 }

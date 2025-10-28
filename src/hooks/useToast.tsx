@@ -1,12 +1,12 @@
 import { ImpactFeedbackStyle } from 'expo-haptics'
 import { AnimatePresence, MotiView } from 'moti'
-import React, { createContext, useContext, useState, useEffect } from 'react'
-import { StyleSheet, View } from 'react-native'
-import { Text } from 'tamagui'
+import React, { createContext, useContext, useEffect, useState } from 'react'
+import { View } from 'react-native'
 
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme, cn } from 'heroui-native'
 import { uuid } from '@/utils'
 import { haptic } from '@/utils/haptic'
+import Text from '@/componentsV2/base/Text'
 
 export type ToastOptions = {
   key?: string
@@ -27,24 +27,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const { isDark } = useTheme()
   const [toasts, setToasts] = useState<ToastOptions[]>([])
 
-  const styles = StyleSheet.create({
-    centeredView: {
-      justifyContent: 'center',
-      alignItems: 'center'
-    },
-    container: {
-      position: 'absolute',
-      maxWidth: '80%',
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      borderRadius: 16,
-      gap: 10,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: isDark ? '#333333' : '#19191c',
-      boxShadow: '0 0 10px 0 rgba(0, 0, 0, 0.2)'
-    }
-  })
+  const centeredViewClassName = 'justify-center items-center'
+  const containerClassName = isDark
+    ? 'absolute max-w-[80%] px-4 py-3.5 rounded-lg gap-2.5 justify-center items-center bg-[#333333] shadow-lg'
+    : 'absolute max-w-[80%] px-4 py-3.5 rounded-lg gap-2.5 justify-center items-center bg-[#19191c] shadow-lg'
 
   const show = (content: React.ReactNode | string, newOptions?: ToastOptions) => {
     haptic(ImpactFeedbackStyle.Medium)
@@ -66,9 +52,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const animationFrameId = requestAnimationFrame(removeExpiredToasts)
+
     if (toasts.length === 0) {
       cancelAnimationFrame(animationFrameId)
     }
+
     return () => cancelAnimationFrame(animationFrameId)
   }, [toasts])
 
@@ -77,7 +65,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <View style={[StyleSheet.absoluteFill, styles.centeredView]}>
+      <View className={cn('absolute inset-0', centeredViewClassName)}>
         <AnimatePresence>
           {toasts.map(toast => (
             <MotiView
@@ -86,11 +74,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ type: 'timing', duration: 200 }}
-              style={[styles.container]}>
+              className={containerClassName}>
               {toast.icon && toast.icon}
 
               {typeof toast?.content === 'string' ? (
-                <Text color={toast.color || '$green100'} fontSize={16}>
+                <Text className={cn('text-base', toast.color || 'text-green-100 dark:text-green-dark-100')}>
                   {toast.content}
                 </Text>
               ) : (

@@ -2,19 +2,21 @@ import { ImpactFeedbackStyle } from 'expo-haptics'
 import { MotiView } from 'moti'
 import React, { createContext, useContext, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Modal, Pressable, StyleSheet } from 'react-native'
-import { Button, StackProps, Text, XStack, YStack } from 'tamagui'
+import { Modal, Pressable } from 'react-native'
 
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme, Button, cn } from 'heroui-native'
 import { haptic } from '@/utils/haptic'
+import YStack from '@/componentsV2/layout/YStack'
+import Text from '@/componentsV2/base/Text'
+import XStack from '@/componentsV2/layout/XStack'
 
 export type DialogOptions = {
   title?: React.ReactNode | string
   content?: React.ReactNode | string
   confirmText?: string
   cancelText?: string
-  confirmStyle?: StackProps['style']
-  cancelStyle?: StackProps['style']
+  confirmStyle?: string
+  cancelStyle?: string
   showCancel?: boolean
   /** 是否可以点击遮罩层关闭 */
   maskClosable?: boolean
@@ -33,14 +35,9 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
   const [options, setOptions] = useState<DialogOptions | null>(null)
   const { t } = useTranslation()
 
-  const styles = StyleSheet.create({
-    centeredView: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.4)'
-    }
-  })
+  const centeredViewClassName = isDark
+    ? 'flex-1 justify-center items-center bg-black/70'
+    : 'flex-1 justify-center items-center bg-black/40'
 
   const close = () => {
     setOpen(false)
@@ -67,18 +64,33 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
     setOpen(true)
   }
 
-  const getConfirmButtonStyle = () => {
+  const getConfirmButtonClassName = () => {
     switch (options?.type) {
       case 'info':
-        return { backgroundColor: '$blue20', borderColor: '$blue20', color: '$blue100' }
+        return 'bg-blue-20 dark:bg-blue-20 border-blue-20 dark:border-blue-20'
       case 'warning':
-        return { backgroundColor: '$orange20', borderColor: '$orange20', color: '$orange100' }
+        return 'bg-orange-20 dark:bg-orange-20 border-orange-20 dark:border-orange-20'
       case 'error':
-        return { backgroundColor: '$red20', borderColor: '$red20', color: '$red100' }
+        return 'bg-red-20 dark:bg-red-20 border-red-20 dark:border-red-20'
       case 'success':
-        return { backgroundColor: '$green10', borderColor: '$green20', color: '$green100' }
+        return 'bg-green-10 dark:bg-green-dark-10 border-green-20 dark:border-green-dark-20'
       default:
-        return { backgroundColor: '$green10', borderColor: '$green20', color: '$green100' }
+        return 'bg-green-10 dark:bg-green-dark-10 border-green-20 dark:border-green-dark-20'
+    }
+  }
+
+  const getConfirmTextClassName = () => {
+    switch (options?.type) {
+      case 'info':
+        return 'text-blue-100 dark:text-blue-100'
+      case 'warning':
+        return 'text-orange-100 dark:text-orange-100'
+      case 'error':
+        return 'text-red-100 dark:text-red-100'
+      case 'success':
+        return 'text-green-100 dark:text-green-dark-100'
+      default:
+        return 'text-green-100 dark:text-green-dark-100'
     }
   }
 
@@ -89,7 +101,8 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
   const confirmText = options?.confirmText ?? t('common.ok')
   const cancelText = options?.cancelText ?? t('common.cancel')
 
-  const confirmButtonStyle = getConfirmButtonStyle()
+  const confirmButtonClassName = getConfirmButtonClassName()
+  const confirmTextClassName = getConfirmTextClassName()
 
   return (
     <DialogContext.Provider value={api}>
@@ -100,19 +113,17 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ type: 'timing', duration: 300 }}
-          style={styles.centeredView}>
-          {maskClosable && <Pressable style={StyleSheet.absoluteFill} onPress={cancel} />}
-          <YStack width="75%" borderRadius={20} backgroundColor="$uiCardBackground">
-            <YStack gap={12} padding={20} alignItems="center">
+          className={centeredViewClassName}>
+          {maskClosable && <Pressable className="absolute inset-0" onPress={cancel} />}
+          <YStack className="w-3/4 rounded-2xl bg-ui-card-background dark:bg-ui-card-background-dark">
+            <YStack className="gap-3 p-5 items-center">
               {typeof options?.title === 'string' ? (
-                <Text fontSize={18} fontWeight="bold" color="$textPrimary">
-                  {options.title}
-                </Text>
+                <Text className="text-lg font-bold text-text-primary dark:text-text-primary-dark">{options.title}</Text>
               ) : (
                 options?.title
               )}
               {typeof options?.content === 'string' ? (
-                <Text fontSize={15} lineHeight={20} color="$textSecondary" textAlign="center">
+                <Text className="text-[15px] leading-5 text-text-secondary dark:text-text-secondary-dark text-center">
                   {options.content}
                 </Text>
               ) : (
@@ -120,33 +131,30 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
               )}
             </YStack>
 
-            <XStack padding={20} paddingTop={0} gap={20}>
+            <XStack className="p-5 pt-0 gap-5">
               {showCancel && (
                 <Button
-                  flex={1}
-                  size={42}
-                  borderRadius={30}
-                  fontSize={17}
-                  backgroundColor="transparent"
-                  borderColor="$gray20"
-                  color="$gray80"
-                  onPress={cancel}
-                  style={options?.cancelStyle}>
-                  {cancelText}
+                  variant="tertiary"
+                  className={cn(
+                    'flex-1 h-[42px] rounded-[30px] bg-transparent border-gray-20 dark:border-gray-20',
+                    options?.cancelStyle?.toString() || ''
+                  )}
+                  onPress={cancel}>
+                  <Button.Label>
+                    <Text className="text-gray-80 dark:text-gray-80 text-[17px]">{cancelText}</Text>
+                  </Button.Label>
                 </Button>
               )}
               <Button
-                flex={1}
-                size={42}
-                borderRadius={30}
-                fontSize={17}
-                borderWidth={1}
-                backgroundColor={confirmButtonStyle.backgroundColor}
-                borderColor={confirmButtonStyle.borderColor}
-                color={confirmButtonStyle.color}
-                onPress={confirm}
-                style={options?.confirmStyle}>
-                {confirmText}
+                className={cn(
+                  'flex-1 h-[42px] rounded-[30px] border',
+                  confirmButtonClassName,
+                  options?.confirmStyle?.toString() || ''
+                )}
+                onPress={confirm}>
+                <Button.Label>
+                  <Text className={cn(confirmTextClassName, 'text-[17px]')}>{confirmText}</Text>
+                </Button.Label>
               </Button>
             </XStack>
           </YStack>

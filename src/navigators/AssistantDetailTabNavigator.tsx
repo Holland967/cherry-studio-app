@@ -3,14 +3,14 @@ import { RouteProp, useRoute } from '@react-navigation/native'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { TouchableOpacity, View } from 'react-native'
-import { Text } from 'tamagui'
 
-import { useTheme } from '@/hooks/useTheme'
 import { AssistantStackParamList } from '@/navigators/AssistantStackNavigator'
 import ModelTabScreen from '@/screens/assistant/tabs/ModelTabScreen'
 import PromptTabScreen from '@/screens/assistant/tabs/PromptTabScreen'
 import ToolTabScreen from '@/screens/assistant/tabs/ToolTabScreen'
 import { Assistant } from '@/types/assistant'
+import { Text } from '@/componentsV2'
+import { cn } from 'heroui-native'
 
 export type AssistantDetailTabParamList = {
   PromptTab: { assistant: Assistant }
@@ -27,7 +27,6 @@ interface AssistantDetailTabNavigatorProps {
 }
 
 function CustomTabBar({ state, navigation }: any) {
-  const { isDark } = useTheme()
   const { t } = useTranslation()
 
   const tabLabels = {
@@ -37,19 +36,7 @@ function CustomTabBar({ state, navigation }: any) {
   }
 
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        backgroundColor: 'transparent',
-        borderWidth: 1,
-        borderColor: '#a0a1b033',
-        borderRadius: 25,
-        marginHorizontal: 5,
-        marginVertical: 4,
-        gap: 5,
-        paddingVertical: 4,
-        paddingHorizontal: 5
-      }}>
+    <View className="rounded-xl flex-row bg-transparent border border-neutral-300/20 mx-[5px] my-1 gap-[5px] py-1 px-[5px]">
       {state.routes.map((route: any, index: number) => {
         const isFocused = state.index === index
 
@@ -69,19 +56,11 @@ function CustomTabBar({ state, navigation }: any) {
           <TouchableOpacity
             key={route.key}
             onPress={onPress}
-            style={{
-              flex: 1,
-              backgroundColor: isFocused ? (isDark ? '#acf3a633' : '#8de59e4d') : 'transparent',
-              borderRadius: 20,
-              paddingVertical: 12,
-              paddingHorizontal: 20,
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-            <Text
-              fontSize={12}
-              fontWeight="bold"
-              color={isFocused ? (isDark ? '#acf3a6ff' : '#81df94ff') : isDark ? '#f9f9f9ff' : '#202020ff'}>
+            className={cn(
+              'flex-1 rounded-lg py-3 px-5 items-center justify-center',
+              isFocused && 'bg-green-20 dark:bg-green-dark-20'
+            )}>
+            <Text className={cn('text-sm font-bold', isFocused && 'text-green-100 dark:text-green-dark-100')}>
               {tabLabels[route.name as keyof typeof tabLabels]}
             </Text>
           </TouchableOpacity>

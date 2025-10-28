@@ -1,14 +1,23 @@
 import { useNavigation } from '@react-navigation/native'
-import { ChevronRight, Cloud, Globe, HardDrive, Info, Package, Settings2 } from '@tamagui/lucide-icons'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
-import { Avatar, Text, XStack, YStack } from 'tamagui'
 
-import { PressableSettingRow, SettingContainer, SettingGroup, SettingGroupTitle } from '@/components/settings'
-import { HeaderBar } from '@/components/settings/HeaderBar'
-import SafeAreaContainer from '@/components/ui/SafeAreaContainer'
+import {
+  Image,
+  Text,
+  XStack,
+  YStack,
+  SafeAreaContainer,
+  HeaderBar,
+  Container,
+  Group,
+  PressableRow,
+  GroupTitle,
+  RowRightArrow
+} from '@/componentsV2'
+import { Cloud, Package, Globe, Settings2, HardDrive, Info } from '@/componentsV2/icons/LucideIcon'
 import { useSettings } from '@/hooks/useSettings'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { HomeNavigationProps } from '@/types/naviagate'
@@ -95,15 +104,15 @@ export default function SettingsScreen() {
   ]
 
   return (
-    <SafeAreaContainer style={{ flex: 1 }}>
+    <SafeAreaContainer className="flex-1">
       <GestureDetector gesture={panGesture}>
-        <View collapsable={false} style={{ flex: 1 }}>
+        <View collapsable={false} className="flex-1">
           <HeaderBar title={t('settings.title')} />
 
-          <SettingContainer>
-            <YStack gap={24} flex={1}>
+          <Container>
+            <YStack className="gap-6 flex-1">
               {settingsItems.map((group, index) => (
-                <Group key={index} title={group.title}>
+                <SettingGroup key={index} title={group.title}>
                   {group.items.map((item, index) => (
                     <SettingItem
                       key={index}
@@ -113,10 +122,10 @@ export default function SettingsScreen() {
                       specificScreen={item.specificScreen}
                     />
                   ))}
-                </Group>
+                </SettingGroup>
               ))}
             </YStack>
-          </SettingContainer>
+          </Container>
         </View>
       </GestureDetector>
     </SafeAreaContainer>
@@ -128,11 +137,11 @@ interface SettingGroupProps {
   children: React.ReactNode
 }
 
-function Group({ title, children }: SettingGroupProps) {
+function SettingGroup({ title, children }: SettingGroupProps) {
   return (
-    <YStack gap={8}>
-      {title && <SettingGroupTitle>{title}</SettingGroupTitle>}
-      <SettingGroup>{children}</SettingGroup>
+    <YStack className="gap-2">
+      {title && <GroupTitle>{title}</GroupTitle>}
+      <Group>{children}</Group>
     </YStack>
   )
 }
@@ -150,10 +159,11 @@ function SettingItem({ title, screen, icon, specificScreen }: SettingItemProps) 
   const renderIcon = () => {
     if (typeof icon === 'string') {
       return (
-        <Avatar circular size={40}>
-          <Avatar.Image accessibilityLabel={title} src={icon || require('@/assets/images/favicon.png')} />
-          <Avatar.Fallback delayMs={600} backgroundColor="$blue10" />
-        </Avatar>
+        <Image
+          source={icon ? { uri: icon } : require('@/assets/images/favicon.png')}
+          className="w-10 h-10 rounded-full"
+          accessibilityLabel={title}
+        />
       )
     }
 
@@ -171,16 +181,14 @@ function SettingItem({ title, screen, icon, specificScreen }: SettingItemProps) 
   }
 
   return (
-    <PressableSettingRow onPress={handlePress}>
-      <XStack alignItems="center" gap={12}>
+    <PressableRow onPress={handlePress}>
+      <XStack className="items-center gap-3">
         {renderIcon()}
         <YStack>
-          <Text fontSize={16} color="$textPrimary" fontWeight="bold">
-            {title}
-          </Text>
+          <Text className="font-bold">{title}</Text>
         </YStack>
       </XStack>
-      <ChevronRight size={20} color="$textSecondary" />
-    </PressableSettingRow>
+      <RowRightArrow />
+    </PressableRow>
   )
 }

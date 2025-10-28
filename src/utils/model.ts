@@ -2,6 +2,11 @@ import { pick } from 'lodash'
 
 import { Model, ModelType } from '@/types/assistant'
 
+/**
+ *
+ * @param m
+ * @returns \{"id":"google/gemini-2.5-flash-image-preview","provider":"cherryin"}
+ */
 export const getModelUniqId = (m?: Model) => {
   return m?.id ? JSON.stringify(pick(m, ['id', 'provider'])) : ''
 }

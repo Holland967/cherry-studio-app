@@ -4,7 +4,7 @@ import { CitationMessageBlock, MessageBlockStatus, MessageBlockType } from '@/ty
 import { createCitationBlock } from '@/utils/messageUtils/create'
 import { findMainTextBlocks } from '@/utils/messageUtils/find'
 
-import { getMessageById } from '../../../../db/queries/messages.queries'
+import { messageDatabase } from '@database'
 import { BlockManager } from '../BlockManager'
 
 const logger = loggerService.withContext('Citation Callbacks')
@@ -71,7 +71,7 @@ export const createCitationCallbacks = (deps: CitationCallbacksDependencies) => 
         }
         blockManager.smartBlockUpdate(blockId, changes, MessageBlockType.CITATION, true)
 
-        const assistantMessage = await getMessageById(assistantMsgId)
+        const assistantMessage = await messageDatabase.getMessageById(assistantMsgId)
 
         if (!assistantMessage) {
           logger.error(`[onLLMWebSearchComplete] Message ${assistantMsgId} not found.`)
@@ -106,7 +106,7 @@ export const createCitationCallbacks = (deps: CitationCallbacksDependencies) => 
         )
         citationBlockId = citationBlock.id
 
-        const assistantMessage = await getMessageById(assistantMsgId)
+        const assistantMessage = await messageDatabase.getMessageById(assistantMsgId)
 
         if (!assistantMessage) {
           logger.error(`[onLLMWebSearchComplete] Message ${assistantMsgId} not found.`)
